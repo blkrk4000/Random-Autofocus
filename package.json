@@ -1,11 +1,11 @@
 {
-  "name": "autofocus-app",
+  "name": "random-autofocus",
   "private": true,
-  "version": "2.1.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "electron/main.cjs",
-  "author": "Mark Forster Fan",
-  "description": "A digital implementation of Mark Forster's Autofocus System.",
+  "author": "Random Autofocus Fan",
+  "description": "A digital implementation of Mark Forster's Autofocus System with Random features.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -31,8 +31,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.autofocus.app",
-    "productName": "Autofocus",
+    "appId": "com.randomautofocus.app",
+    "productName": "Random Autofocus",
     "mac": {
       "category": "public.app-category.productivity",
       "target": [

@@ -16,7 +16,7 @@ const TagManagerModal: React.FC<TagManagerModalProps> = ({ isOpen, onClose, tagC
 
     if (!isOpen) return null;
 
-    const tags = Object.entries(tagCounts).sort((a: [string, number], b: [string, number]) => b[1] - a[1]); // Sort by count desc
+    const tags = (Object.entries(tagCounts) as [string, number][]).sort((a, b) => b[1] - a[1]); // Sort by count desc
     const contexts = tags.filter(([t]) => t.startsWith('@'));
     const projects = tags.filter(([t]) => t.startsWith('#'));
 

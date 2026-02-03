@@ -30,7 +30,7 @@ const HelpModal = () => {
                             {activeTab === 'guide' && (
                                 <div className="space-y-4">
                                     <section>
-                                        <h4 className="font-bold text-lg mb-2 flex items-center gap-2"><CheckSquare size={18} className="text-primary"/> The Autofocus Philosophy</h4>
+                                        <h4 className="font-bold text-lg mb-2 flex items-center gap-2"><CheckSquare size={18} className="text-primary"/> The Random Autofocus Philosophy</h4>
                                         <p className="text-ink-dim">
                                             This app implements Mark Forster's <strong>Autofocus v1</strong> system. It treats your tasks like a college block.
                                         </p>

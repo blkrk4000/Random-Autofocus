@@ -1,5 +1,5 @@
 {
-  "name": "Autofocus App",
+  "name": "Random Autofocus",
   "description": "A digital implementation of Mark Forster's Autofocus System. Features page-based task management, focus mode, and persistent local storage.",
   "requestFramePermissions": []
 }

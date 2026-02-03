@@ -104,7 +104,7 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                 if (selectionMode && selectedIds.size > 0) {
                     Array.from(selectedIds).forEach(id => action(id));
                 } else if (highlightedTodoId) {
-                    action(highlightedTodoId);
+                    action(highlightedTodoId as string);
                 }
             };
 
