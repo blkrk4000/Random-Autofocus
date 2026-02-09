@@ -102,7 +102,7 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
             // Helper to apply action to ALL selected items OR just the highlighted one
             const applyAction = (action: (id: string) => void) => {
                 if (selectionMode && selectedIds.size > 0) {
-                    Array.from(selectedIds).forEach(id => action(id));
+                    Array.from(selectedIds).forEach((id: string) => action(id));
                 } else if (highlightedTodoId) {
                     action(highlightedTodoId as string);
                 }
@@ -232,7 +232,7 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                 </div>
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-1">
-                        <DiceRoller onRoll={onRollDice} disabled={!canRoll || !!statusFilter} />
+                        <DiceRoller onRoll={onRollDice} disabled={!canRoll} />
                         {selectionMode ? (<button onClick={onSelectAll} title="Select All Visible Tasks" className="flex items-center gap-2 text-primary font-medium text-sm bg-primary-50 px-3 py-1.5 rounded-lg border border-primary-100"><ListChecks size={16}/> All</button>) : (<button onClick={onToggleSelectionMode} className="text-ink-dim hover:text-primary hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-lg transition-colors" title="Enter Selection Mode"><ListChecks size={20}/></button>)}
                     </div>
                     <div className="flex gap-2 text-xs font-semibold uppercase tracking-wide">

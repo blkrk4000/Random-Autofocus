@@ -1,12 +1,22 @@
 
 import React, { useState } from 'react';
-import { HelpCircle, X, Book, CheckSquare, Laptop, Smartphone, Wifi, Coffee } from 'lucide-react';
+import { HelpCircle, X, Book, PlayCircle, Zap, Keyboard, FileJson, Dices, Coffee } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 import { SHORTCUTS } from '../shortcuts';
 
 const HelpModal = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('guide'); 
+    const [activeTab, setActiveTab] = useState('howto'); 
+
+    const TabButton = ({ id, label, icon: Icon }: { id: string, label: string, icon: any }) => (
+        <button 
+            onClick={() => setActiveTab(id)} 
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors border-b-2 whitespace-nowrap ${activeTab === id ? 'border-primary text-primary' : 'border-transparent text-ink-dim hover:text-ink'}`}
+        >
+            <Icon size={16} />
+            {label}
+        </button>
+    );
 
     return (
         <>
@@ -19,59 +29,70 @@ const HelpModal = () => {
                             <button onClick={() => setIsOpen(false)} title="Close Help" className="text-ink-dim hover:text-ink"><X size={20} /></button>
                         </div>
                         
-                        <div className="flex border-b border-paper-line px-2 overflow-x-auto">
-                            <button onClick={() => setActiveTab('guide')} className={`px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'guide' ? 'border-primary text-primary' : 'border-transparent text-ink-dim hover:text-ink'}`}>Start Guide</button>
-                            <button onClick={() => setActiveTab('features')} className={`px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'features' ? 'border-primary text-primary' : 'border-transparent text-ink-dim hover:text-ink'}`}>Features</button>
-                            <button onClick={() => setActiveTab('shortcuts')} className={`px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'shortcuts' ? 'border-primary text-primary' : 'border-transparent text-ink-dim hover:text-ink'}`}>Shortcuts</button>
-                            <button onClick={() => setActiveTab('install')} className={`px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'install' ? 'border-primary text-primary' : 'border-transparent text-ink-dim hover:text-ink'}`}>Install/Offline</button>
+                        <div className="flex border-b border-paper-line px-2 overflow-x-auto no-scrollbar">
+                            <TabButton id="howto" label="How To" icon={PlayCircle} />
+                            <TabButton id="features" label="Features" icon={Zap} />
+                            <TabButton id="shortcuts" label="Shortcuts" icon={Keyboard} />
+                            <TabButton id="data" label="Import/Export" icon={FileJson} />
+                            <TabButton id="philosophy" label="Philosophy" icon={Dices} />
                         </div>
 
                         <div className="p-6 overflow-y-auto space-y-6 text-sm text-ink leading-relaxed flex-1">
-                            {activeTab === 'guide' && (
-                                <div className="space-y-4">
+                            {activeTab === 'howto' && (
+                                <div className="space-y-6">
                                     <section>
-                                        <h4 className="font-bold text-lg mb-2 flex items-center gap-2"><CheckSquare size={18} className="text-primary"/> The Random Autofocus Philosophy</h4>
-                                        <p className="text-ink-dim">
-                                            This app implements Mark Forster's <strong>Autofocus v1</strong> system. It treats your tasks like a college block.
+                                        <h4 className="font-bold text-lg mb-3 text-primary">The Random Workflow</h4>
+                                        <p className="text-ink-dim mb-4">
+                                            This app combines list-keeping with random selection to defeat procrastination.
                                         </p>
-                                        <ul className="list-disc list-inside mt-2 space-y-1 text-ink-dim ml-2">
-                                            <li>New tasks always go to the <strong>last page</strong>.</li>
-                                            <li>You work through pages one by one.</li>
-                                            <li>If you finish a task, check it off.</li>
-                                            <li>If you work on it but don't finish, <strong>re-enter it</strong> (Shift+Enter). It moves to the end of the list.</li>
-                                            <li>If you skip a task on an active page, <strong>highlight (dismiss) it</strong>.</li>
-                                            <li>If you abandon a task completely, <strong>cancel it</strong>.</li>
-                                        </ul>
+                                        <ol className="space-y-4">
+                                            <li className="flex gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-input-bg border border-paper-line flex items-center justify-center font-bold text-xs flex-shrink-0">1</div>
+                                                <div>
+                                                    <strong className="block text-ink">Capture Everything</strong>
+                                                    <span className="text-ink-dim">Write down everything you need to do. New tasks always go to the last page. Don't worry about order.</span>
+                                                </div>
+                                            </li>
+                                            <li className="flex gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-primary text-primary-fg flex items-center justify-center font-bold text-xs flex-shrink-0">2</div>
+                                                <div>
+                                                    <strong className="block text-primary">Trust the Dice</strong>
+                                                    <span className="text-ink-dim">Click the Randomizer (Dice icon) or press <kbd>Ctrl+Shift+R</kbd>. The app will jump to a random page and highlight a task.</span>
+                                                </div>
+                                            </li>
+                                            <li className="flex gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-input-bg border border-paper-line flex items-center justify-center font-bold text-xs flex-shrink-0">3</div>
+                                                <div>
+                                                    <strong className="block text-ink">Take Action</strong>
+                                                    <ul className="list-disc list-inside text-ink-dim mt-1 space-y-1">
+                                                        <li><strong>Do it:</strong> Finish the task and mark it done.</li>
+                                                        <li><strong>Work on it:</strong> If you start but don't finish, <strong>Re-enter</strong> it (Shift+Enter). It moves to the end of the list.</li>
+                                                        <li><strong>Can't do it?</strong> If you have resistance or can't do it now, <strong>Dismiss</strong> it (highlights yellow) or <strong>Cancel</strong> it. Then roll again.</li>
+                                                    </ul>
+                                                </div>
+                                            </li>
+                                        </ol>
                                     </section>
-                                    <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-100 dark:border-primary-900/50">
-                                        <h5 className="font-semibold text-primary mb-1">Status Colors</h5>
-                                        <ul className="space-y-2 text-ink-dim">
-                                            <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary"></span><span><strong>Open:</strong> Ready to work on.</span></li>
-                                            <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500"></span><span><strong>Done:</strong> Finished completely.</span></li>
-                                            <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-400"></span><span><strong>Dismissed:</strong> Skipped for now.</span></li>
-                                            <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-gray-400"></span><span><strong>Cancelled:</strong> Won't do.</span></li>
-                                        </ul>
-                                    </div>
                                 </div>
                             )}
 
                             {activeTab === 'features' && (
                                 <div className="space-y-6">
                                     <section>
-                                        <h4 className="font-bold text-base mb-2">📌 Focus Mode</h4>
-                                        <p className="text-ink-dim">Pin tasks from any page to a temporary "Focus Sheet" (Shortcut: <kbd>f</kbd>). Useful for planning your day across multiple pages.</p>
+                                        <h4 className="font-bold text-base mb-2 flex items-center gap-2"><Dices size={16} className="text-primary"/> Randomizer Logic</h4>
+                                        <p className="text-ink-dim">The dice rolls a number (1-25) and moves that many steps down the list. It circles back to the start if needed. It intelligently skips over completed tasks to find the next open one.</p>
                                     </section>
                                     <section>
-                                        <h4 className="font-bold text-base mb-2">🎲 Randomizer</h4>
-                                        <p className="text-ink-dim">Stuck? Click the Dice icon (<kbd>Ctrl+Shift+R</kbd>) to let the app pick a task for you.</p>
+                                        <h4 className="font-bold text-base mb-2">🎯 Focus Mode</h4>
+                                        <p className="text-ink-dim">
+                                            Need to concentrate on a few specific items? Pin tasks from any page (Shortcut: <kbd>f</kbd>). 
+                                            Switch to Focus Mode (Target icon) to work <strong>only</strong> on those pinned tasks. 
+                                            The Randomizer will also restrict itself to your Focus list while active.
+                                        </p>
                                     </section>
                                     <section>
                                         <h4 className="font-bold text-base mb-2">🏷️ Tags & Contexts</h4>
                                         <p className="text-ink-dim">Use <strong>@context</strong> (e.g., @home) or <strong>#project</strong> (e.g., #work) in your task text. Click tags to filter. Manage them in the Sidebar.</p>
-                                    </section>
-                                    <section>
-                                        <h4 className="font-bold text-base mb-2">⏱️ Global Timer</h4>
-                                        <p className="text-ink-dim">A simple Pomodoro-style timer in the header. Click the time to edit duration.</p>
                                     </section>
                                 </div>
                             )}
@@ -87,42 +108,54 @@ const HelpModal = () => {
                                 </div>
                             )}
 
-                            {activeTab === 'install' && (
+                            {activeTab === 'data' && (
                                 <div className="space-y-4">
-                                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-900/50 flex gap-3">
-                                        <Wifi size={24} className="text-emerald-600 flex-shrink-0"/>
-                                        <div>
-                                            <h5 className="font-bold text-emerald-700 dark:text-emerald-400">Offline Capable</h5>
-                                            <p className="text-xs text-emerald-800/70 dark:text-emerald-300/70 mt-1">
-                                                This app only needs internet <strong>once</strong> to load. It then saves itself to your browser. Your data lives 100% on your device (Local Storage).
-                                            </p>
-                                        </div>
-                                    </div>
-
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="p-3 border border-paper-line rounded-lg">
-                                            <h5 className="font-bold flex items-center gap-2 mb-2"><Laptop size={16}/> Desktop</h5>
-                                            <p className="text-xs text-ink-dim">Simply save this <code>index.html</code> file anywhere. Double click to run. No server needed.</p>
+                                            <h5 className="font-bold flex items-center gap-2 mb-2"><FileJson size={16}/> JSON Backup</h5>
+                                            <p className="text-xs text-ink-dim">
+                                                Use <strong>Settings {'>'} Export JSON</strong> regularly to save a full backup of your list. You can restore this file on any device.
+                                            </p>
                                         </div>
                                         <div className="p-3 border border-paper-line rounded-lg">
-                                            <h5 className="font-bold flex items-center gap-2 mb-2"><Smartphone size={16}/> iOS / Android</h5>
+                                            <h5 className="font-bold flex items-center gap-2 mb-2"><Zap size={16}/> Markdown</h5>
                                             <p className="text-xs text-ink-dim">
-                                                1. Open in Safari (iOS) or Chrome (Android).<br/>
-                                                2. Tap "Share" or Menu.<br/>
-                                                3. Select <strong>"Add to Home Screen"</strong>.
+                                                Use <strong>Copy MD</strong> to paste your tasks into Obsidian, Notion, or Roam Research.
                                             </p>
                                         </div>
                                     </div>
-                                    
-                                    <div className="mt-4 text-xs text-ink-dim text-center italic">
-                                        ⚠️ Caution: If you clear your browser's "Site Data", your tasks will be deleted. Use the "Export JSON" feature in Settings regularly for backups!
+                                </div>
+                            )}
+
+                            {activeTab === 'philosophy' && (
+                                <div className="space-y-6">
+                                    <div className="p-6 bg-paper border border-paper-line rounded-xl italic text-ink-dim text-center">
+                                        "It takes out all the personal decisions which are hugely influenced by emotions, fear, laziness, habits and just general human fallibility..."
                                     </div>
+                                    
+                                    <section>
+                                        <h4 className="font-bold text-lg mb-2 text-primary">Reducing Resistance by Randomness</h4>
+                                        <p className="text-ink-dim leading-relaxed mb-4">
+                                            The core philosophy of this app is based on Mark Forster's observations on productivity.
+                                            Instead of spending time and energy deciding how urgent, important, pressing, or scary a task is, you just forget all that and <strong>accept a purely random decision</strong>.
+                                        </p>
+                                        <p className="text-ink-dim leading-relaxed">
+                                            What we find is that stress levels fall and resistance is reduced almost to zero. We seem to have taken the <strong>“friction”</strong> out of deciding what to do next.
+                                        </p>
+                                    </section>
+                                    
+                                    <section>
+                                        <h4 className="font-bold text-base mb-2">Why Re-enter tasks?</h4>
+                                        <p className="text-ink-dim text-sm">
+                                            If you work on a task but don't finish it, re-entering it at the end of the list allows your brain to let go of it for now. You know it's safe at the end of the queue, and the randomizer will bring it back eventually. "Little and often" is the key to completing big tasks.
+                                        </p>
+                                    </section>
                                 </div>
                             )}
                         </div>
                         <div className="p-4 bg-black/5 dark:bg-white/5 border-t border-paper-line text-center">
                             <p className="text-xs text-ink-dim flex items-center justify-center gap-1">
-                                Made with <Coffee size={10}/> by <strong>blkrk4000</strong> & <strong>Gemini</strong> • {APP_VERSION}
+                                Based on Mark Forster's Random Method • Made by <strong>blkrk4000</strong> & <strong>Gemini</strong> • {APP_VERSION}
                             </p>
                         </div>
                     </div>

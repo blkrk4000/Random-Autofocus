@@ -9,6 +9,7 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTodos } from './hooks/useTodos';
 import { useTheme } from './hooks/useTheme';
 import { generateMarkdown, downloadJSON, parseImportFile, copyToClipboard } from './utils/exportUtils';
+import { getDemoData } from './utils/demoData';
 
 import Sidebar from './components/Sidebar';
 import NotebookPage from './components/NotebookPage';
@@ -141,11 +142,79 @@ const App = () => {
 
     // -- Actions --
     const handleRollDice = () => {
-        const candidates = visibleTodos.filter(t => !t.isCompleted && !t.isCancelled && !t.isDismissed);
-        if (candidates.length > 0) {
-            const random = candidates[Math.floor(Math.random() * candidates.length)];
-            setHighlightedTodoId(random.id);
+        // --- FOCUS MODE LOGIC ---
+        // If we are in Focus Mode, we just pick a random task from the Focus Sheet.
+        // The intricate page/line logic doesn't apply to this temporary list.
+        if (isFocusMode) {
+            const focusTasks = todos.filter(t => t.isFocused && !t.isCompleted && !t.isCancelled && !t.isDismissed);
+            
+            if (focusTasks.length === 0) {
+                alert("No open tasks in Focus Mode!");
+                return;
+            }
+            
+            // Simple random selection for Focus Mode
+            const randomTask = focusTasks[Math.floor(Math.random() * focusTasks.length)];
+            setHighlightedTodoId(randomTask.id);
+            return;
         }
+
+        // --- NORMAL NOTEBOOK LOGIC (MARK FORSTER) ---
+        // 1. Range is 1 to ITEMS_PER_PAGE (25).
+        // 2. "Starting from the beginning... produce a number and move down... INCLUDE crossed off lines"
+        // 3. "Circle back to the beginning... ignoring empty lines on the last page"
+        // 4. "If I land on a crossed out line, I move to the next... 'Slide'"
+
+        // Safety: Are there ANY open tasks?
+        const hasOpenTasks = todos.some(t => !t.isCompleted && !t.isCancelled && !t.isDismissed);
+        if (!hasOpenTasks) {
+            alert("No open tasks found in the notebook!");
+            return;
+        }
+
+        // 1. Determine Start Position (Index)
+        // If a task is selected, we start from there. If not, start from -1 (beginning).
+        let startIndex = -1;
+        if (highlightedTodoId) {
+            startIndex = todos.findIndex(t => t.id === highlightedTodoId);
+        }
+        if (startIndex === -1 && highlightedTodoId) {
+             // Handle stale ID
+             setHighlightedTodoId(null);
+             startIndex = -1;
+        }
+
+        // 2. Generate Random Jump (1 - 25)
+        const roll = Math.floor(Math.random() * ITEMS_PER_PAGE) + 1;
+
+        // 3. Calculate Target (Modulo arithmetic handles the "Circle Back")
+        // We add the roll to current index. This counts ALL lines (done or not).
+        let targetIndex = (startIndex + roll) % todos.length;
+        if (targetIndex < 0) targetIndex += todos.length;
+
+        // 4. The "Slide"
+        // If we land on a task that is Done/Dismissed/Cancelled, we increment until we hit an Open one.
+        // We know an open task exists because of the check at the start.
+        let safetyCounter = 0;
+        while (
+            (todos[targetIndex].isCompleted || 
+             todos[targetIndex].isCancelled || 
+             todos[targetIndex].isDismissed) && 
+            safetyCounter < todos.length
+        ) {
+            targetIndex = (targetIndex + 1) % todos.length;
+            safetyCounter++;
+        }
+
+        const targetTask = todos[targetIndex];
+
+        // 5. Execute Move
+        // Reset filters so the user sees the jump context
+        setSearchQuery('');
+        setStatusFilter(null);
+        
+        setActivePageIndex(targetTask.pageIndex);
+        setHighlightedTodoId(targetTask.id);
     };
 
     const handleRenameTag = (oldTag: string, newTag: string) => {
@@ -194,6 +263,16 @@ const App = () => {
                 setIsSettingsOpen(false);
             }
         }
+    };
+    
+    const handleLoadDemoData = () => {
+        if (todos.length > 0) {
+            if (!confirm("Load demo data? This will mix with your current tasks (unless you clear them first).")) return;
+        }
+        importTodos(getDemoData());
+        setIsSettingsOpen(false);
+        setActivePageIndex(0);
+        alert("Demo data loaded!");
     };
     
     const handleStartBreak = () => {
@@ -325,6 +404,7 @@ const App = () => {
                 onArchive={handleArchive} 
                 onArchiveMD={async () => { await copyToClipboard(generateMarkdown(todos.filter(t => t.isCompleted || t.isCancelled), "Archive")); }}
                 onResetAll={handleResetAll}
+                onLoadDemoData={handleLoadDemoData}
             />
 
             <TimerSettingsModal
@@ -444,7 +524,11 @@ const App = () => {
                             onToggleSelectionMode={() => { if (selectionMode) setSelectedIds(new Set()); setSelectionMode(!selectionMode); }} 
                             onClearFocus={clearFocus} 
                             onRollDice={handleRollDice} 
-                            canRoll={visibleTodos.some(t => !t.isCompleted && !t.isCancelled && !t.isDismissed)} 
+                            // Context-aware rolling enable/disable
+                            canRoll={isFocusMode 
+                                ? todos.some(t => t.isFocused && !t.isCompleted && !t.isDismissed) 
+                                : todos.some(t => !t.isCompleted && !t.isCancelled && !t.isDismissed)
+                            } 
                             settings={appSettings} 
                             statusFilter={statusFilter} 
                             onSetStatusFilter={(s) => { setStatusFilter(s); if(s) { setIsFocusMode(false); setSearchQuery(''); } }} 

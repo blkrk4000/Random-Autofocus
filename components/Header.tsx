@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { PanelLeft, Search, X, Layers, Settings, RotateCcw } from 'lucide-react';
+import { PanelLeft, Search, X, Target, Settings, RotateCcw } from 'lucide-react';
 import GlobalTimer from './GlobalTimer';
 import ThemeMenu from './ThemeMenu';
 import HelpModal from './HelpModal';
@@ -75,7 +75,7 @@ const Header: React.FC<HeaderProps> = (props) => {
                     title="Toggle Focus Mode (f)" 
                     className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${props.isFocusMode ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 border-amber-200 dark:border-amber-800' : 'bg-paper text-ink border-paper-line/50 hover:border-primary/50'}`}
                 >
-                    <Layers size={18} />
+                    <Target size={18} />
                     <span className="hidden xl:inline">Focus</span>
                 </button>
                 

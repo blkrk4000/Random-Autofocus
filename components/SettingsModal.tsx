@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Settings, X, Type, CheckCircle2, Database, Download, Upload, Archive, AlertTriangle } from 'lucide-react';
+import { Settings, X, Type, CheckCircle2, Database, Download, Upload, Archive, AlertTriangle, Sparkles } from 'lucide-react';
 import { Settings as SettingsType } from '../types';
 
 interface SettingsModalProps {
@@ -14,9 +14,10 @@ interface SettingsModalProps {
     onArchive: () => void;
     onArchiveMD: () => void;
     onResetAll: () => void;
+    onLoadDemoData: () => void; // New prop
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onUpdateSettings, onExport, onExportMD, onImport, onArchive, onArchiveMD, onResetAll }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onUpdateSettings, onExport, onExportMD, onImport, onArchive, onArchiveMD, onResetAll, onLoadDemoData }) => {
     if (!isOpen) return null;
     
     const fontFamilies: { id: SettingsType['fontFamily']; name: string; class: string }[] = [
@@ -66,6 +67,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                             <button onClick={onExport} title="Download backup as JSON" className="flex items-center justify-center gap-2 bg-input-bg border border-paper-line hover:border-primary/50 hover:bg-black/5 dark:hover:bg-white/5 py-2.5 rounded-lg text-ink transition-all font-medium text-xs sm:text-sm"><Download size={14}/> JSON</button>
                             <button onClick={onExportMD} title="Download backup as Markdown" className="flex items-center justify-center gap-2 bg-input-bg border border-paper-line hover:border-primary/50 hover:bg-black/5 dark:hover:bg-white/5 py-2.5 rounded-lg text-ink transition-all font-medium text-xs sm:text-sm"><Download size={14}/> Markdown</button>
                             <button onClick={onImport} title="Restore from backup" className="col-span-2 flex items-center justify-center gap-2 bg-input-bg border border-paper-line hover:border-primary/50 hover:bg-black/5 dark:hover:bg-white/5 py-2.5 rounded-lg text-ink transition-all font-medium text-xs sm:text-sm"><Upload size={14}/> Import JSON/MD/TXT</button>
+                        </div>
+                        <div className="mt-2">
+                            <button onClick={onLoadDemoData} className="w-full flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 py-2.5 rounded-lg transition-all font-medium text-xs sm:text-sm"><Sparkles size={14}/> Load Demo Data</button>
                         </div>
                      </div>
 

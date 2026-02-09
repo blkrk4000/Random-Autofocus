@@ -48,8 +48,8 @@ const Sidebar: React.FC<SidebarProps> = ({ totalPages, activePageIndex, onPageSe
                  </div>
                  <div className="flex flex-col justify-center">
                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 leading-none mb-0.5">Mark Forster's</span>
-                     <h1 className="text-xl font-bold text-sidebar-fg tracking-tight leading-none font-mono flex items-baseline gap-2">
-                         Random Autofocus <span className="text-xs opacity-40 font-normal">{APP_VERSION}</span>
+                     <h1 className="text-xl font-bold text-sidebar-fg tracking-tight leading-none font-mono">
+                         Random Autofocus<span className="text-xs opacity-40 font-normal ml-2">{APP_VERSION}</span>
                      </h1>
                  </div>
             </div>

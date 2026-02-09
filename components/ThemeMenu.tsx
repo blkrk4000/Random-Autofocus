@@ -1,8 +1,7 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Palette, Sun, Moon, CheckCircle2 } from 'lucide-react';
 import { THEMES } from '../themes';
-import { Theme } from '../types';
 
 interface ThemeMenuProps {
     isOpen: boolean;
@@ -14,6 +13,12 @@ interface ThemeMenuProps {
 }
 
 const ThemeMenu: React.FC<ThemeMenuProps> = ({ isOpen, setIsOpen, isDarkMode, setIsDarkMode, currentTheme, setCurrentTheme }) => {
+    
+    // Sort themes alphabetically by name for display
+    const sortedThemes = useMemo(() => {
+        return Object.entries(THEMES).sort(([, a], [, b]) => a.name.localeCompare(b.name));
+    }, []);
+
     return (
         <div className="relative">
             <button onClick={() => setIsOpen(!isOpen)} title="Change Theme & Appearance" className="p-2 text-ink-dim hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full transition-colors"><Palette size={20} /></button>
@@ -25,8 +30,8 @@ const ThemeMenu: React.FC<ThemeMenuProps> = ({ isOpen, setIsOpen, isDarkMode, se
                             {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
                     </div>
-                    <div className="p-1">
-                        {Object.entries(THEMES).map(([key, theme]) => (
+                    <div className="p-1 max-h-80 overflow-y-auto">
+                        {sortedThemes.map(([key, theme]) => (
                             <button key={key} onClick={() => { setCurrentTheme(key); setIsOpen(false); }} title={`Select ${theme.name} Theme`} className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between group transition-colors ${currentTheme === key ? 'bg-primary-50 text-primary' : 'text-ink hover:bg-black/5 dark:hover:bg-white/5'}`}>
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full border border-paper-line/50" style={{background: theme.colors[isDarkMode ? 'dark' : 'light']['--color-app-bg']}}></div>
