@@ -42,7 +42,7 @@ const DiceRoller = ({ onRoll, disabled }: { onRoll: () => void, disabled: boolea
     const [isRolling, setIsRolling] = React.useState(false);
     const handleClick = () => { if (disabled || isRolling) return; setIsRolling(true); setTimeout(() => { onRoll(); setIsRolling(false); }, 600); };
     return (
-        <button onClick={handleClick} disabled={disabled} className={`p-2 rounded-lg transition-colors ${disabled ? 'text-ink-dim/30 cursor-not-allowed' : 'text-ink-dim hover:text-primary hover:bg-black/5 dark:hover:bg-white/5'}`} title="Randomizer: Pick a task (Ctrl+Shift+R)">
+        <button onClick={handleClick} disabled={disabled} className={`p-2 rounded-lg transition-colors ${disabled ? 'text-ink-dim/30 cursor-not-allowed' : 'text-ink-dim hover:text-primary hover:bg-black/5 dark:hover:bg-white/5'}`} title="Randomizer: Pick a task (r)">
             <div className={`transition-transform duration-500 ${isRolling ? 'rotate-180' : ''}`}>{isRolling ? <Sparkles size={20} className="text-primary" /> : <Dices size={20} />}</div>
         </button>
     );
@@ -221,7 +221,7 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                         )}
                     </span>
 
-                    {isFocusMode && todos.length > 0 && <button onClick={onClearFocus} title="Clear all tasks from Focus mode" className="text-xs font-semibold text-amber-700 bg-amber-200/50 hover:bg-amber-200 dark:text-amber-400 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 px-2 py-1 rounded flex items-center gap-1 transition-colors"><Eraser size={12}/> Clear Focus</button>}
+                    {isFocusMode && todos.length > 0 && <button onClick={() => { if(confirm("Remove all tasks from Focus Mode?")) onClearFocus(); }} title="Clear all tasks from Focus mode" className="text-xs font-semibold text-amber-700 bg-amber-200/50 hover:bg-amber-200 dark:text-amber-400 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 px-2 py-1 rounded flex items-center gap-1 transition-colors"><Eraser size={12}/> Clear Focus</button>}
                     {statusFilter && <button onClick={() => onSetStatusFilter(null)} title="Clear current filter" className="text-xs font-semibold text-primary bg-primary-50 hover:bg-primary-100 px-2 py-1 rounded flex items-center gap-1 transition-colors"><X size={12}/> Exit Filter</button>}
                     {(isFocusMode || statusFilter) && (
                         <div className="flex items-center gap-1 ml-2">

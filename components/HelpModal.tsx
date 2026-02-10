@@ -83,6 +83,14 @@ const HelpModal = () => {
                                         <p className="text-ink-dim">The dice rolls a number (1-25) and moves that many steps down the list. It circles back to the start if needed. It intelligently skips over completed tasks to find the next open one.</p>
                                     </section>
                                     <section>
+                                        <h4 className="font-bold text-base mb-2">🔄 Smart Routines</h4>
+                                        <p className="text-ink-dim">
+                                            Add the tag <strong className="text-primary">@routine</strong> to any task. When you <strong>Re-enter</strong> it (Shift+Enter), 
+                                            all checkboxes in its notes (e.g., <code className="bg-black/10 dark:bg-white/10 px-1 rounded">- [x] Step 1</code>) 
+                                            will automatically reset to unchecked. Perfect for daily rituals!
+                                        </p>
+                                    </section>
+                                    <section>
                                         <h4 className="font-bold text-base mb-2">🎯 Focus Mode</h4>
                                         <p className="text-ink-dim">
                                             Need to concentrate on a few specific items? Pin tasks from any page (Shortcut: <kbd>f</kbd>). 

@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Todo } from '../types';
 import { useLocalStorage } from './useLocalStorage';
@@ -105,10 +106,19 @@ export const useTodos = () => {
             nextPageIdx = countOnLastPage < ITEMS_PER_PAGE ? lastPageIdx : lastPageIdx + 1;
         }
 
+        // Logic to reset checkboxes if task is a routine
+        let newNotes = task.notes;
+        const isRoutine = task.text.toLowerCase().includes('@routine');
+        
+        if (isRoutine && newNotes) {
+            // Replace '- [x]' or '- [X]' with '- [ ]'
+            newNotes = newNotes.replace(/- \[[xX]\]/g, '- [ ]');
+        }
+
         const newTodo: Todo = {
             id: generateId(),
             text: task.text,
-            notes: task.notes,
+            notes: newNotes,
             isCompleted: false,
             isFocused: false,
             isDismissed: false,
@@ -130,6 +140,23 @@ export const useTodos = () => {
         setTodos(prev => prev.filter(t => !t.isCompleted && !t.isCancelled));
     }, [saveHistory, setTodos]);
 
+    const compactTodos = useCallback(() => {
+        saveHistory();
+        setTodos(prev => {
+            // Sort by pageIndex ASC, then createdAt ASC
+            const sorted = [...prev].sort((a, b) => {
+                if (a.pageIndex !== b.pageIndex) return a.pageIndex - b.pageIndex;
+                return a.createdAt - b.createdAt;
+            });
+
+            // Re-assign pageIndex based on ITEMS_PER_PAGE
+            return sorted.map((todo, index) => ({
+                ...todo,
+                pageIndex: Math.floor(index / ITEMS_PER_PAGE)
+            }));
+        });
+    }, [saveHistory, setTodos]);
+
     const importTodos = useCallback((newTodos: Todo[]) => {
         saveHistory();
         setTodos(p => {
@@ -139,14 +166,10 @@ export const useTodos = () => {
         });
     }, [saveHistory, setTodos]);
 
-    // NEW: Delete an entire page and shift subsequent pages down
     const deletePage = useCallback((pageIndex: number) => {
         saveHistory();
         setTodos(prev => {
-            // 1. Filter out tasks on this page
             const remaining = prev.filter(t => t.pageIndex !== pageIndex);
-            
-            // 2. Shift indices for subsequent pages (e.g. Page 5 becomes Page 4)
             return remaining.map(t => ({
                 ...t,
                 pageIndex: t.pageIndex > pageIndex ? t.pageIndex - 1 : t.pageIndex
@@ -154,7 +177,6 @@ export const useTodos = () => {
         });
     }, [saveHistory, setTodos]);
 
-    // NEW: Delete EVERYTHING
     const deleteAllTodos = useCallback(() => {
         saveHistory();
         setTodos([]);
@@ -162,7 +184,7 @@ export const useTodos = () => {
 
     return {
         todos,
-        setTodos, // Exposed for raw manipulation if absolutely needed, but prefer handlers
+        setTodos,
         addTodo,
         updateTodo,
         toggleTodo,
@@ -174,9 +196,10 @@ export const useTodos = () => {
         clearFocus,
         undo,
         archiveCompleted,
+        compactTodos,
         importTodos,
-        deletePage,     // New export
-        deleteAllTodos, // New export
+        deletePage,
+        deleteAllTodos,
         historyLength: history.length,
         getNextAvailablePageIndex
     };

@@ -114,13 +114,23 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ todo, isOpen, onClose
                     </div>
                     <div className="flex-1 flex flex-col px-6 pb-6 min-h-0"><div className="flex items-center justify-between mb-2"><label className="text-xs font-semibold text-ink-dim uppercase tracking-wider flex items-center gap-2"><StickyNote size={12}/> Notes & Checklists</label><button onClick={() => setIsEditingNotes(!isEditingNotes)} title={isEditingNotes ? "Switch to Preview" : "Edit Notes"} className="text-xs font-medium text-primary hover:underline flex items-center gap-1">{isEditingNotes ? <><Eye size={12}/> Preview</> : <><Edit3 size={12}/> Edit Notes</>}</button></div>{isEditingNotes ? (<textarea value={modalNotes} onChange={e => setModalNotes(e.target.value)} placeholder="Add details, links, or checklists ( - [ ] )" className="flex-1 w-full p-4 text-sm bg-input-bg border border-paper-line rounded-lg outline-none text-ink font-mono resize-none focus:ring-2 focus:ring-primary/20" autoFocus />) : (<div className="flex-1 w-full p-4 text-sm bg-paper/50 border border-paper-line/30 rounded-lg overflow-y-auto text-ink prose prose-sm dark:prose-invert" onClick={() => !modalNotes && setIsEditingNotes(true)}>
                         {modalNotes ? modalNotes.split('\n').map((line, i) => { 
-                            const isChecked = line.trim().startsWith('- [x]'); 
-                            const isUnchecked = line.trim().startsWith('- [ ]'); 
+                            const trimmed = line.trim();
+                            
+                            // Headings
+                            if (trimmed.startsWith('# ')) return <h1 key={i} className="text-lg font-bold text-primary mt-4 mb-2 first:mt-0">{trimmed.replace(/^#\s+/, '')}</h1>;
+                            if (trimmed.startsWith('## ')) return <h2 key={i} className="text-base font-bold text-primary opacity-90 mt-3 mb-1">{trimmed.replace(/^##\s+/, '')}</h2>;
+                            if (trimmed.startsWith('### ')) return <h3 key={i} className="text-sm font-semibold text-ink-dim mt-2 mb-1 uppercase tracking-wide">{trimmed.replace(/^###\s+/, '')}</h3>;
+
+                            // Checkboxes
+                            const isChecked = trimmed.startsWith('- [x]'); 
+                            const isUnchecked = trimmed.startsWith('- [ ]'); 
                             if (isChecked || isUnchecked) { 
                                 const content = line.replace(/- \[[ x]\]/, '').trim(); 
-                                return (<div key={i} className="flex items-start gap-3 py-1 group cursor-pointer" onClick={() => handleNoteCheckbox(i, isChecked)}><div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${isChecked ? 'bg-primary border-primary text-primary-fg' : 'border-ink-dim text-transparent group-hover:border-primary'}`}><Check size={10} strokeWidth={4} /></div><span className={`flex-1 ${isChecked ? 'line-through text-ink-dim' : 'text-ink'}`}>{content}</span></div>); 
+                                return (<div key={i} className="flex items-start gap-3 py-1 group cursor-pointer" onClick={() => handleNoteCheckbox(i, isChecked)}><div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${isChecked ? 'bg-primary border-primary text-primary-fg' : 'border-ink-dim text-transparent group-hover:border-primary'}`}><Check size={10} strokeWidth={4} /></div><span className={`flex-1 ${isChecked ? 'line-through text-ink-dim' : 'text-ink'}`}>{content}</span></div>); 
                             } 
-                            return <div key={i} className="min-h-[1.5em] py-0.5">{line}</div>; 
+                            
+                            // Plain text
+                            return <div key={i} className="min-h-[1.5em] py-0.5 whitespace-pre-wrap">{line}</div>; 
                         }) : <div className="text-ink-dim italic">No notes. Click to add details...</div>}
                     </div>)}</div>
                 </div>

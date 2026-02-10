@@ -1,3 +1,4 @@
+
 export const SHORTCUTS = [
     { key: "Ctrl + N", description: "New Task" },
     { key: "Cmd/Ctrl + F", description: "Search" },
@@ -9,7 +10,7 @@ export const SHORTCUTS = [
     { key: "x", description: "Cancel (Abandon)" },
     { key: "Cmd/Ctrl + Del", description: "Delete Permanently" },
     { key: "Cmd/Ctrl + Z", description: "Undo" },
-    { key: "Ctrl + Shift + R", description: "Random Task" },
+    { key: "r", description: "Random Task" },
     { key: "Ctrl + G", description: "Go to Page..." },
     { key: "Shift + ↑/↓", description: "Multi-Select" },
     { key: "↑/↓", description: "Navigate Tasks" },

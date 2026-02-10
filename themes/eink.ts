@@ -4,7 +4,39 @@ import { Theme } from '../types';
 export const eink: Theme = {
     name: 'E-Ink',
     colors: {
-      light: { '--color-app-bg': '#f5f5f5', '--color-input-bg': '#ffffff', '--color-sidebar-bg': '#ffffff', '--color-sidebar-fg': '#000000', '--color-sidebar-active': '#e5e5e5', '--color-paper': '#ffffff', '--color-paper-line': '#d4d4d4', '--color-paper-margin': '#404040', '--color-text': '#000000', '--color-text-dim': '#737373', '--color-primary': '#000000', '--color-primary-fg': '#ffffff', '--color-primary-dark': '#262626', '--color-primary-50': '#e5e5e5', '--color-primary-100': '#d4d4d4' },
-      dark: { '--color-app-bg': '#000000', '--color-input-bg': '#171717', '--color-sidebar-bg': '#0a0a0a', '--color-sidebar-fg': '#ffffff', '--color-sidebar-active': '#262626', '--color-paper': '#000000', '--color-paper-line': '#404040', '--color-paper-margin': '#737373', '--color-text': '#ffffff', '--color-text-dim': '#a3a3a3', '--color-primary': '#ffffff', '--color-primary-fg': '#000000', '--color-primary-dark': '#e5e5e5', '--color-primary-50': '#262626', '--color-primary-100': '#404040' }
+      light: { 
+          '--color-app-bg': '#e6e6e6', 
+          '--color-input-bg': '#ffffff', 
+          '--color-sidebar-bg': '#efefef', 
+          '--color-sidebar-fg': '#333333', 
+          '--color-sidebar-active': '#dcdcdc', 
+          '--color-paper': '#f2f2f2', 
+          '--color-paper-line': '#b0b0b0', 
+          '--color-paper-margin': '#666666', 
+          '--color-text': '#222222', 
+          '--color-text-dim': '#666666', 
+          '--color-primary': '#404040', 
+          '--color-primary-fg': '#ffffff', 
+          '--color-primary-dark': '#1a1a1a', 
+          '--color-primary-50': '#d4d4d4', 
+          '--color-primary-100': '#c0c0c0' 
+      },
+      dark: { 
+          '--color-app-bg': '#222222', 
+          '--color-input-bg': '#303030', 
+          '--color-sidebar-bg': '#2a2a2a', 
+          '--color-sidebar-fg': '#d4d4d4', 
+          '--color-sidebar-active': '#3a3a3a', 
+          '--color-paper': '#2a2a2a', 
+          '--color-paper-line': '#4a4a4a', 
+          '--color-paper-margin': '#737373', 
+          '--color-text': '#dddddd', 
+          '--color-text-dim': '#999999', 
+          '--color-primary': '#cccccc', 
+          '--color-primary-fg': '#1a1a1a', 
+          '--color-primary-dark': '#ffffff', 
+          '--color-primary-50': '#3a3a3a', 
+          '--color-primary-100': '#4a4a4a' 
+      }
     }
 };

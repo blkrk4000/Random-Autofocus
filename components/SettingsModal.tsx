@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Settings, X, Type, CheckCircle2, Database, Download, Upload, Archive, AlertTriangle, Sparkles } from 'lucide-react';
+import { Settings, X, Type, CheckCircle2, Database, Download, Upload, Archive, AlertTriangle, Sparkles, Layers } from 'lucide-react';
 import { Settings as SettingsType } from '../types';
 
 interface SettingsModalProps {
@@ -14,10 +14,11 @@ interface SettingsModalProps {
     onArchive: () => void;
     onArchiveMD: () => void;
     onResetAll: () => void;
-    onLoadDemoData: () => void; // New prop
+    onLoadDemoData: () => void;
+    onCompactPages: () => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onUpdateSettings, onExport, onExportMD, onImport, onArchive, onArchiveMD, onResetAll, onLoadDemoData }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onUpdateSettings, onExport, onExportMD, onImport, onArchive, onArchiveMD, onResetAll, onLoadDemoData, onCompactPages }) => {
     if (!isOpen) return null;
     
     const fontFamilies: { id: SettingsType['fontFamily']; name: string; class: string }[] = [
@@ -60,7 +61,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                             ))}
                         </div>
                      </div>
-
+                     
                      <div>
                         <label className="flex items-center gap-2 text-sm font-semibold text-ink-dim uppercase tracking-wider mb-3"><Database size={16}/> Data Management</label>
                         <div className="grid grid-cols-2 gap-2">
@@ -81,6 +82,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                             </button>
                             <button onClick={onArchiveMD} title="Archive completed tasks (MD)" className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 py-3 rounded-lg text-red-600 dark:text-red-400 transition-all font-medium text-sm">
                                 Archive MD
+                            </button>
+                            <button onClick={onCompactPages} title="Re-arrange tasks to fill empty slots on pages" className="col-span-2 flex items-center justify-center gap-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 py-3 rounded-lg text-orange-600 dark:text-orange-400 transition-all font-medium text-sm">
+                                <Layers size={14} /> Compact Pages (Fill Gaps)
                             </button>
                         </div>
                         

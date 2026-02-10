@@ -23,6 +23,17 @@ export const getDemoData = (): Todo[] => {
         },
         {
             id: generateId(),
+            text: "Daily Morning Ritual @routine",
+            notes: "# Morning Checklist\n- [x] Check emails\n- [x] Review calendar\n- [ ] Drink water\n- [ ] Plan top 3 tasks\n\n# Review\n- [ ] Clear inbox",
+            isCompleted: false, // OPEN
+            isFocused: false,
+            isDismissed: false,
+            isCancelled: false,
+            pageIndex: 0,
+            createdAt: now - 4 * day
+        },
+        {
+            id: generateId(),
             text: "Buy milk and coffee beans @shopping",
             notes: "",
             isCompleted: false, // OPEN
@@ -57,7 +68,7 @@ export const getDemoData = (): Todo[] => {
         {
             id: generateId(),
             text: "Draft the project proposal for #ClientX",
-            notes: "- [x] Outline\n- [ ] Budget\n- [ ] Timeline",
+            notes: "# Draft Structure\n- [x] Outline\n- [ ] Budget\n- [ ] Timeline",
             isCompleted: false, // OPEN
             isFocused: true, // FOCUSED
             isDismissed: false,
@@ -118,7 +129,7 @@ export const getDemoData = (): Todo[] => {
         {
             id: generateId(),
             text: "Plan birthday party for Sarah",
-            notes: "",
+            notes: "# Guest List\n- [ ] Bob\n- [ ] Alice\n- [ ] Charlie\n\n## Shopping List\n- [ ] Cake\n- [ ] Candles\n- [ ] Drinks\n\n## Logistics\n- [ ] Send invites\n- [ ] Clean house",
             isCompleted: false,
             isFocused: false,
             isDismissed: false,

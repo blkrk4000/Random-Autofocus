@@ -34,7 +34,7 @@ const App = () => {
     // -- Custom Hooks --
     const { 
         todos, addTodo, updateTodo, toggleTodo, dismissTodo, cancelTodo, deleteTodo, 
-        toggleFocus, reenterTodo, clearFocus, undo, archiveCompleted, importTodos, 
+        toggleFocus, reenterTodo, clearFocus, undo, archiveCompleted, compactTodos, importTodos, 
         getNextAvailablePageIndex, setTodos, deletePage, deleteAllTodos, historyLength
     } = useTodos();
     
@@ -274,6 +274,13 @@ const App = () => {
         setActivePageIndex(0);
         alert("Demo data loaded!");
     };
+
+    const handleCompactPages = () => {
+        if (confirm("Re-arrange all tasks to fill empty gaps on pages? This will change page numbers for some tasks.")) {
+            compactTodos();
+            alert("Pages compacted!");
+        }
+    };
     
     const handleStartBreak = () => {
         setIsTimeUpOpen(false);
@@ -340,7 +347,7 @@ const App = () => {
             if (isCtrlOrMeta && key === 'n') { e.preventDefault(); setIsInputExpanded(true); }
             if (isCtrlOrMeta && ((e.shiftKey && key === 's') || key === 'b')) { e.preventDefault(); setIsSidebarOpen(p => !p); }
             if (isCtrlOrMeta && (key === 'f' || key === 'k')) { e.preventDefault(); document.querySelector<HTMLInputElement>('input[placeholder="Search..."]')?.focus(); }
-            if (isCtrlOrMeta && e.shiftKey && key === 'r') { e.preventDefault(); handleRollDice(); }
+            if (key === 'r' && !isCtrlOrMeta && !e.shiftKey) { e.preventDefault(); handleRollDice(); }
             
             // Go To Page Modal
             if (isCtrlOrMeta && key === 'g') {
@@ -405,6 +412,7 @@ const App = () => {
                 onArchiveMD={async () => { await copyToClipboard(generateMarkdown(todos.filter(t => t.isCompleted || t.isCancelled), "Archive")); }}
                 onResetAll={handleResetAll}
                 onLoadDemoData={handleLoadDemoData}
+                onCompactPages={handleCompactPages}
             />
 
             <TimerSettingsModal
@@ -512,7 +520,7 @@ const App = () => {
                             onToggleTodo={toggleTodo} 
                             onDeleteTodo={deleteTodo} 
                             onDismissTodo={dismissTodo} 
-                            onReenterTodo={reenterTodo} 
+                            onReenterTodo={reenterTodo} // Pass direct callback
                             onToggleFocus={toggleFocus} 
                             onUpdateTodo={updateTodo} 
                             onTagClick={t => {setSearchQuery(t);}} 
@@ -524,7 +532,6 @@ const App = () => {
                             onToggleSelectionMode={() => { if (selectionMode) setSelectedIds(new Set()); setSelectionMode(!selectionMode); }} 
                             onClearFocus={clearFocus} 
                             onRollDice={handleRollDice} 
-                            // Context-aware rolling enable/disable
                             canRoll={isFocusMode 
                                 ? todos.some(t => t.isFocused && !t.isCompleted && !t.isDismissed) 
                                 : todos.some(t => !t.isCompleted && !t.isCancelled && !t.isDismissed)
