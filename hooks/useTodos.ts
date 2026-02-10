@@ -3,7 +3,6 @@ import { useState, useCallback } from 'react';
 import { Todo } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 import { generateId } from '../services/storageService';
-import { ITEMS_PER_PAGE } from '../constants';
 
 export const useTodos = () => {
     const [todos, setTodos] = useLocalStorage<Todo[]>('todos', []);
@@ -23,15 +22,15 @@ export const useTodos = () => {
         setTodos(prev);
     }, [history, setTodos]);
 
-    const getNextAvailablePageIndex = useCallback(() => {
+    const getNextAvailablePageIndex = useCallback((itemsPerPage: number) => {
         const totalPages = todos.length === 0 ? 1 : Math.max(...todos.map(t => t.pageIndex)) + 1;
         if (todos.length === 0) return 0;
         const lastIdx = totalPages - 1;
         const count = todos.filter(t => t.pageIndex === lastIdx).length;
-        return count < ITEMS_PER_PAGE ? lastIdx : lastIdx + 1;
+        return count < itemsPerPage ? lastIdx : lastIdx + 1;
     }, [todos]);
 
-    const addTodo = useCallback((text: string) => {
+    const addTodo = useCallback((text: string, itemsPerPage: number) => {
         if (!text.trim()) return;
         saveHistory();
         const newTodo: Todo = {
@@ -42,7 +41,7 @@ export const useTodos = () => {
             isFocused: false,
             isCancelled: false,
             isDismissed: false,
-            pageIndex: getNextAvailablePageIndex(),
+            pageIndex: getNextAvailablePageIndex(itemsPerPage),
             createdAt: Date.now()
         };
         setTodos(p => [...p, newTodo]);
@@ -73,15 +72,14 @@ export const useTodos = () => {
         setTodos(p => p.filter(t => t.id !== id));
     }, [saveHistory, setTodos]);
 
-    const toggleFocus = useCallback((id: string) => {
+    const toggleFocus = useCallback((id: string, itemsPerPage: number) => {
         const t = todos.find(i => i.id === id);
         if (!t) return;
         
-        // Validation logic for focus limit could be here, but we'll return a boolean or handle UI elsewhere
         if (!t.isFocused) {
             const count = todos.filter(x => x.isFocused && !x.isCompleted && !x.isDismissed && !x.isCancelled).length;
-            if (count >= ITEMS_PER_PAGE) {
-                alert(`Focus Sheet is full (${ITEMS_PER_PAGE} tasks max).`);
+            if (count >= itemsPerPage) {
+                alert(`Focus Sheet is full (${itemsPerPage} tasks max).`);
                 return;
             }
         }
@@ -94,7 +92,7 @@ export const useTodos = () => {
         }));
     }, [todos, saveHistory, setTodos]);
 
-    const reenterTodo = useCallback((id: string) => {
+    const reenterTodo = useCallback((id: string, itemsPerPage: number) => {
         const task = todos.find(t => t.id === id);
         if (!task || task.isCompleted || task.isDismissed || task.isCancelled) return;
         saveHistory();
@@ -103,15 +101,13 @@ export const useTodos = () => {
         if (todos.length > 0) {
             const lastPageIdx = Math.max(...todos.map(t => t.pageIndex));
             const countOnLastPage = todos.filter(t => t.pageIndex === lastPageIdx).length;
-            nextPageIdx = countOnLastPage < ITEMS_PER_PAGE ? lastPageIdx : lastPageIdx + 1;
+            nextPageIdx = countOnLastPage < itemsPerPage ? lastPageIdx : lastPageIdx + 1;
         }
 
-        // Logic to reset checkboxes if task is a routine
         let newNotes = task.notes;
         const isRoutine = task.text.toLowerCase().includes('@routine');
         
         if (isRoutine && newNotes) {
-            // Replace '- [x]' or '- [X]' with '- [ ]'
             newNotes = newNotes.replace(/- \[[xX]\]/g, '- [ ]');
         }
 
@@ -140,19 +136,21 @@ export const useTodos = () => {
         setTodos(prev => prev.filter(t => !t.isCompleted && !t.isCancelled));
     }, [saveHistory, setTodos]);
 
-    const compactTodos = useCallback(() => {
+    // Used for "Compact Pages" button AND for resizing when density changes
+    const repaginate = useCallback((itemsPerPage: number) => {
+        // We do NOT save history for density changes to avoid undo spam when trying settings,
+        // unless it's a manual compact action. But for simplicity, we'll save it.
         saveHistory();
         setTodos(prev => {
-            // Sort by pageIndex ASC, then createdAt ASC
+            // Sort stability: Keep original page order, then creation time
             const sorted = [...prev].sort((a, b) => {
                 if (a.pageIndex !== b.pageIndex) return a.pageIndex - b.pageIndex;
                 return a.createdAt - b.createdAt;
             });
 
-            // Re-assign pageIndex based on ITEMS_PER_PAGE
             return sorted.map((todo, index) => ({
                 ...todo,
-                pageIndex: Math.floor(index / ITEMS_PER_PAGE)
+                pageIndex: Math.floor(index / itemsPerPage)
             }));
         });
     }, [saveHistory, setTodos]);
@@ -196,7 +194,7 @@ export const useTodos = () => {
         clearFocus,
         undo,
         archiveCompleted,
-        compactTodos,
+        repaginate,
         importTodos,
         deletePage,
         deleteAllTodos,

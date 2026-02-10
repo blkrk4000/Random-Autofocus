@@ -2,6 +2,7 @@
 import React from 'react';
 import { Check, Square, Pin, Highlighter, Ban, FolderKanban, StickyNote, Redo2, Pencil, Trash2 } from 'lucide-react';
 import { Todo, Settings } from '../types';
+import { DENSITY_CONFIG } from '../constants';
 
 interface TaskItemProps {
     todo: Todo;
@@ -21,6 +22,7 @@ interface TaskItemProps {
     settings: Settings;
     itemRef: (el: HTMLLIElement | null) => void;
     statusFilter: string | null;
+    lineHeight?: number; // Optional prop passed from parent
 }
 
 const LinkifiedText: React.FC<{ text: string; onTagClick: (t: string) => void; onTagRemove: (t: string) => void }> = ({ text, onTagClick, onTagRemove }) => {
@@ -39,14 +41,17 @@ const LinkifiedText: React.FC<{ text: string; onTagClick: (t: string) => void; o
 const TaskItem: React.FC<TaskItemProps> = ({ 
     todo, highlightedTodoId, selectionMode, selectedIds, onToggleSelect, 
     onToggleFocus, onToggleTodo, onOpenModal, onTagClick, onTagRemove,
-    onReenterTodo, onDismissTodo, onCancelTodo, onDeleteTodo, settings, itemRef, statusFilter
+    onReenterTodo, onDismissTodo, onCancelTodo, onDeleteTodo, settings, itemRef, statusFilter,
+    lineHeight
 }) => {
     const isHighlighted = highlightedTodoId === todo.id;
     const isSelected = selectedIds.has(todo.id);
     const isProject = todo.text.toLowerCase().includes('#prj');
     
+    const density = DENSITY_CONFIG[settings.density] || DENSITY_CONFIG.comfortable;
     const fontClass = { 'sans': 'font-sans', 'serif': 'font-serif', 'mono': 'font-mono' }[settings.fontFamily] || 'font-sans';
-    const sizeClass = { 'compact': 'text-base', 'normal': 'text-lg', 'large': 'text-xl' }[settings.fontSize] || 'text-lg';
+    const sizeClass = density.fontSizeClass;
+    const currentLineHeight = lineHeight || density.lineHeight;
 
     let rowStyles = "px-4 gap-3"; 
     let isRowColored = false;
@@ -68,7 +73,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
     if (selectionMode && isSelected) { rowStyles += " bg-primary-50/50"; }
 
     return (
-        <li ref={itemRef} className={`h-[28px] flex items-center group relative transition-all duration-300 rounded-md ${rowStyles}`} onClick={() => selectionMode && onToggleSelect(todo.id)}>
+        <li 
+            ref={itemRef} 
+            className={`flex items-center group relative transition-all duration-300 rounded-md ${rowStyles}`} 
+            style={{height: currentLineHeight}}
+            onClick={() => selectionMode && onToggleSelect(todo.id)}
+        >
             <div className={`absolute w-10 h-full flex items-center justify-center z-20 top-0 transition-all ${isRowColored ? '-left-[2.5rem]' : '-left-14'}`}>
                 {selectionMode ? (
                     <button onClick={(e) => { e.stopPropagation(); onToggleSelect(todo.id); }} title={isSelected ? "Deselect" : "Select"} className={`transition-all ${isSelected ? 'text-primary' : 'text-paper-line hover:text-ink'}`}>
@@ -85,7 +95,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 {todo.isCancelled ? <Ban size={10} strokeWidth={3} /> : <Check size={10} strokeWidth={3} />}
             </button>
             
-            <span title="Click to edit details" onClick={(e) => { e.stopPropagation(); onOpenModal(todo); }} className={`${sizeClass} ${fontClass} truncate flex-1 leading-[28px] pt-[1px] transition-all duration-300 font-medium cursor-pointer flex items-center gap-2 ${todo.isCompleted ? 'line-through text-emerald-600/50' : todo.isCancelled ? 'line-through decoration-2 decoration-gray-400/50 text-gray-400 dark:text-gray-600' : todo.isDismissed ? 'text-yellow-900 dark:text-yellow-100' : 'text-ink'}`}>
+            <span title="Click to edit details" onClick={(e) => { e.stopPropagation(); onOpenModal(todo); }} className={`${sizeClass} ${fontClass} truncate flex-1 pt-[1px] transition-all duration-300 font-medium cursor-pointer flex items-center gap-2 ${todo.isCompleted ? 'line-through text-emerald-600/50' : todo.isCancelled ? 'line-through decoration-2 decoration-gray-400/50 text-gray-400 dark:text-gray-600' : todo.isDismissed ? 'text-yellow-900 dark:text-yellow-100' : 'text-ink'}`} style={{lineHeight: `${currentLineHeight}px`}}>
                 {statusFilter && <span className="text-[10px] font-mono opacity-50 flex-shrink-0 bg-black/5 dark:bg-white/10 px-1 rounded">P{todo.pageIndex+1}</span>} 
                 {isProject && !todo.isCompleted && !todo.isCancelled && <FolderKanban size={14} className="text-fuchsia-500 flex-shrink-0" />}
                 <span className="truncate">

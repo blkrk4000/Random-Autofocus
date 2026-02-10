@@ -12,8 +12,10 @@ export interface Todo {
   modifiedAt?: number;
 }
 
+export type Density = 'compact' | 'comfortable' | 'spacious';
+
 export interface Settings {
-  fontSize: 'compact' | 'normal' | 'large';
+  density: Density;
   fontFamily: 'sans' | 'serif' | 'mono';
   timerDefaultDuration: number; // in minutes
   timerBreakDuration: number; // in minutes

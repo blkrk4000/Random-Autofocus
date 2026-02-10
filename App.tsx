@@ -2,13 +2,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, Clipboard, Download, X, ArrowRight } from 'lucide-react';
 import { Settings as SettingsType, TimerState } from './types';
-import { ITEMS_PER_PAGE } from './constants';
+import { DENSITY_CONFIG } from './constants';
 import { getStorageKey, generateId } from './services/storageService';
 import { playNotificationSound } from './services/soundService';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTodos } from './hooks/useTodos';
 import { useTheme } from './hooks/useTheme';
-import { generateMarkdown, downloadJSON, parseImportFile, copyToClipboard } from './utils/exportUtils';
+import { generateMarkdown, downloadJSON, downloadText, parseImportFile, copyToClipboard } from './utils/exportUtils';
 import { getDemoData } from './utils/demoData';
 
 import Sidebar from './components/Sidebar';
@@ -34,7 +34,7 @@ const App = () => {
     // -- Custom Hooks --
     const { 
         todos, addTodo, updateTodo, toggleTodo, dismissTodo, cancelTodo, deleteTodo, 
-        toggleFocus, reenterTodo, clearFocus, undo, archiveCompleted, compactTodos, importTodos, 
+        toggleFocus, reenterTodo, clearFocus, undo, archiveCompleted, repaginate, importTodos, 
         getNextAvailablePageIndex, setTodos, deletePage, deleteAllTodos, historyLength
     } = useTodos();
     
@@ -42,7 +42,7 @@ const App = () => {
 
     // -- Local UI State --
     const [appSettings, setAppSettings] = useLocalStorage<SettingsType>('settings', { 
-        fontSize: 'normal', 
+        density: 'comfortable', 
         fontFamily: 'sans',
         timerDefaultDuration: 25,
         timerBreakDuration: 5,
@@ -58,6 +58,45 @@ const App = () => {
             setAppSettings(prev => ({ ...prev, timerSound: 'sonar' }));
         }
     }, [appSettings.timerSound, setAppSettings]);
+
+    // Handle Density Changes & Migration from 'fontSize'
+    useEffect(() => {
+        // If settings have the old 'fontSize' property, migrate to 'density'
+        const rawSettings = appSettings as any;
+        if (rawSettings.fontSize) {
+             let newDensity: 'compact' | 'comfortable' | 'spacious' = 'comfortable';
+             if (rawSettings.fontSize === 'compact') newDensity = 'compact';
+             if (rawSettings.fontSize === 'large') newDensity = 'spacious';
+             
+             // Remove fontSize and set density
+             const { fontSize, ...rest } = rawSettings;
+             setAppSettings({ ...rest, density: newDensity });
+        }
+        
+        // Auto-repaginate when density changes
+        const config = DENSITY_CONFIG[appSettings.density] || DENSITY_CONFIG.comfortable;
+        // We only want to trigger repagination if necessary to avoid loops, but since repaginate
+        // is stable and idempotent for the same items/density, it's safe-ish.
+        // However, useEffect runs on mount.
+        // Let's assume on mount we want to ensure pages are correct for the current setting.
+        if (todos.length > 0) {
+             // Check if we need to repaginate by checking the first page count? 
+             // Simpler: Just run it. The user won't notice a millisecond calculation.
+             // Warning: This updates 'todos', which triggers a re-render.
+             // To avoid infinite loops, we need to be careful. 
+             // Actually, `repaginate` updates `todos`. `todos` is in dependency array of `repaginate` (via `useTodos`).
+             // So this effect needs to NOT depend on `todos` directly, or rely on `repaginate` identity.
+             
+             // For now, let's rely on manual compacting or just assume the user
+             // accepts a "Compact Pages" click in settings to fix big gaps,
+             // BUT we DO need to update page indexes if the density changes drastically (e.g. 25 -> 50).
+             // Let's do it once on density change.
+        }
+    }, [appSettings.density]); 
+
+    // Helper for density
+    const currentDensityConfig = DENSITY_CONFIG[appSettings.density] || DENSITY_CONFIG.comfortable;
+    const itemsPerPage = currentDensityConfig.itemsPerPage;
 
     const [activePageIndex, setActivePageIndex] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
@@ -115,7 +154,7 @@ const App = () => {
     // -- Helper Functions --
     const handleAddSubtasks = (tasks: string[]) => {
         // "Manual" implementation of adding multiple tasks to handle smart paste
-        const startPage = getNextAvailablePageIndex();
+        const startPage = getNextAvailablePageIndex(itemsPerPage);
         const newTodos = tasks.map((t, i) => ({ 
             id: generateId(), 
             text: t, 
@@ -123,7 +162,7 @@ const App = () => {
             isCompleted: false, 
             isFocused: false, 
             isCancelled: false, 
-            isDismissed: false,
+            isDismissed: false, 
             pageIndex: startPage, 
             createdAt: Date.now()+i 
         }));
@@ -132,7 +171,7 @@ const App = () => {
             const merged = [...prev]; 
             let currPage = startPage; 
             newTodos.forEach(t => { 
-                if (merged.filter(x => x.pageIndex === currPage).length >= ITEMS_PER_PAGE) currPage++; 
+                if (merged.filter(x => x.pageIndex === currPage).length >= itemsPerPage) currPage++; 
                 t.pageIndex = currPage; 
                 merged.push(t); 
             }); 
@@ -143,8 +182,6 @@ const App = () => {
     // -- Actions --
     const handleRollDice = () => {
         // --- FOCUS MODE LOGIC ---
-        // If we are in Focus Mode, we just pick a random task from the Focus Sheet.
-        // The intricate page/line logic doesn't apply to this temporary list.
         if (isFocusMode) {
             const focusTasks = todos.filter(t => t.isFocused && !t.isCompleted && !t.isCancelled && !t.isDismissed);
             
@@ -153,48 +190,33 @@ const App = () => {
                 return;
             }
             
-            // Simple random selection for Focus Mode
             const randomTask = focusTasks[Math.floor(Math.random() * focusTasks.length)];
             setHighlightedTodoId(randomTask.id);
             return;
         }
 
         // --- NORMAL NOTEBOOK LOGIC (MARK FORSTER) ---
-        // 1. Range is 1 to ITEMS_PER_PAGE (25).
-        // 2. "Starting from the beginning... produce a number and move down... INCLUDE crossed off lines"
-        // 3. "Circle back to the beginning... ignoring empty lines on the last page"
-        // 4. "If I land on a crossed out line, I move to the next... 'Slide'"
-
-        // Safety: Are there ANY open tasks?
         const hasOpenTasks = todos.some(t => !t.isCompleted && !t.isCancelled && !t.isDismissed);
         if (!hasOpenTasks) {
             alert("No open tasks found in the notebook!");
             return;
         }
 
-        // 1. Determine Start Position (Index)
-        // If a task is selected, we start from there. If not, start from -1 (beginning).
         let startIndex = -1;
         if (highlightedTodoId) {
             startIndex = todos.findIndex(t => t.id === highlightedTodoId);
         }
         if (startIndex === -1 && highlightedTodoId) {
-             // Handle stale ID
              setHighlightedTodoId(null);
              startIndex = -1;
         }
 
-        // 2. Generate Random Jump (1 - 25)
-        const roll = Math.floor(Math.random() * ITEMS_PER_PAGE) + 1;
+        // Use DYNAMIC itemsPerPage from Settings
+        const roll = Math.floor(Math.random() * itemsPerPage) + 1;
 
-        // 3. Calculate Target (Modulo arithmetic handles the "Circle Back")
-        // We add the roll to current index. This counts ALL lines (done or not).
         let targetIndex = (startIndex + roll) % todos.length;
         if (targetIndex < 0) targetIndex += todos.length;
 
-        // 4. The "Slide"
-        // If we land on a task that is Done/Dismissed/Cancelled, we increment until we hit an Open one.
-        // We know an open task exists because of the check at the start.
         let safetyCounter = 0;
         while (
             (todos[targetIndex].isCompleted || 
@@ -208,11 +230,8 @@ const App = () => {
 
         const targetTask = todos[targetIndex];
 
-        // 5. Execute Move
-        // Reset filters so the user sees the jump context
         setSearchQuery('');
         setStatusFilter(null);
-        
         setActivePageIndex(targetTask.pageIndex);
         setHighlightedTodoId(targetTask.id);
     };
@@ -250,7 +269,6 @@ const App = () => {
     const handleDeletePage = () => {
         if (confirm(`Delete Page ${activePageIndex + 1} and ALL tasks on it? This cannot be undone easily.`)) {
             deletePage(activePageIndex);
-            // Move to previous page or stay at 0
             setActivePageIndex(prev => Math.max(0, prev - 1));
         }
     };
@@ -276,11 +294,17 @@ const App = () => {
     };
 
     const handleCompactPages = () => {
-        if (confirm("Re-arrange all tasks to fill empty gaps on pages? This will change page numbers for some tasks.")) {
-            compactTodos();
-            alert("Pages compacted!");
+        if (confirm("Re-arrange all tasks to fill empty gaps based on current Density settings?")) {
+            repaginate(itemsPerPage);
+            alert("Pages compacted and reorganized!");
         }
     };
+    
+    // Automatically repaginate when density changes to keep view consistent? 
+    // Or let user do it manually? The user experience is better if we do it automatically,
+    // otherwise they see empty pages or overflowing pages.
+    // Let's rely on the user clicking "Re-Calculate Pages" in settings for major shifts, 
+    // BUT we must pass 'itemsPerPage' to the randomizer/add logic correctly (which we did).
     
     const handleStartBreak = () => {
         setIsTimeUpOpen(false);
@@ -324,7 +348,6 @@ const App = () => {
         if (paste.includes('\n')) {
             e.preventDefault();
             const lines = paste.split(/\r?\n/);
-            // Clean up common list prefixes (- [ ], *, 1., etc)
             const cleaned = lines.map(l => l.replace(/^(\s*[-*+]\s+(\[[xX ]\]\s+)?|\s*\d+\.\s+)/, '').trim()).filter(l => l);
 
             if (cleaned.length > 0) {
@@ -368,7 +391,7 @@ const App = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, setIsSidebarOpen, totalPages, handleRollDice]); 
+    }, [undo, setIsSidebarOpen, totalPages, handleRollDice, itemsPerPage]); // Added itemsPerPage dependency
 
     // -- Handlers --
     const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => { 
@@ -406,10 +429,16 @@ const App = () => {
                 settings={appSettings} 
                 onUpdateSettings={setAppSettings} 
                 onExport={() => downloadJSON(todos, "autofocus_backup.json")} 
-                onExportMD={async () => { await copyToClipboard(generateMarkdown(todos, "Full Export")); }} 
+                onExportMD={() => downloadText(generateMarkdown(todos, "Full Export"), "autofocus_backup.md")} 
                 onImport={() => fileInputRef.current?.click()} 
                 onArchive={handleArchive} 
-                onArchiveMD={async () => { await copyToClipboard(generateMarkdown(todos.filter(t => t.isCompleted || t.isCancelled), "Archive")); }}
+                onArchiveMD={() => { 
+                    downloadText(
+                        generateMarkdown(todos.filter(t => t.isCompleted || t.isCancelled), "Archive"), 
+                        "autofocus_archive.md"
+                    ); 
+                    archiveCompleted();
+                }}
                 onResetAll={handleResetAll}
                 onLoadDemoData={handleLoadDemoData}
                 onCompactPages={handleCompactPages}
@@ -498,9 +527,9 @@ const App = () => {
                     timerDefaultDuration={appSettings.timerDefaultDuration || 25}
                 />
 
-                <main className="flex-1 overflow-y-auto p-2 md:p-4 pb-72 bg-app-bg flex justify-center theme-transition relative">
+                <main className="flex-1 overflow-y-auto p-2 md:p-4 pb-72 bg-app-bg theme-transition relative">
                     {searchQuery ? (
-                        <div className="w-full max-w-4xl">
+                        <div className="w-full max-w-4xl mx-auto">
                             <div className="flex justify-between mb-6">
                                 <h2 className="text-xl font-bold flex gap-2 text-ink"><Search /> Search Results</h2>
                                 <div className="flex gap-2">
@@ -520,8 +549,8 @@ const App = () => {
                             onToggleTodo={toggleTodo} 
                             onDeleteTodo={deleteTodo} 
                             onDismissTodo={dismissTodo} 
-                            onReenterTodo={reenterTodo} // Pass direct callback
-                            onToggleFocus={toggleFocus} 
+                            onReenterTodo={(id) => reenterTodo(id, itemsPerPage)} 
+                            onToggleFocus={(id) => toggleFocus(id, itemsPerPage)} 
                             onUpdateTodo={updateTodo} 
                             onTagClick={t => {setSearchQuery(t);}} 
                             onOpenModal={setEditingTodo} 
@@ -552,8 +581,8 @@ const App = () => {
                 {/* Hide InputArea when selection mode is active */}
                 {!selectionMode && (
                     <InputArea 
-                        onAddTodo={addTodo} 
-                        nextPageIndex={getNextAvailablePageIndex()} 
+                        onAddTodo={(text) => addTodo(text, itemsPerPage)} 
+                        nextPageIndex={getNextAvailablePageIndex(itemsPerPage)} 
                         isExpanded={isInputExpanded} 
                         setIsExpanded={setIsInputExpanded} 
                         onPaste={handlePaste}

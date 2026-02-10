@@ -1,3 +1,4 @@
+
 import { Todo } from '../types';
 
 export const generateMarkdown = (list: Todo[], title?: string) => {
@@ -14,6 +15,15 @@ export const generateMarkdown = (list: Todo[], title?: string) => {
 export const downloadJSON = (data: any, filename: string) => {
     const a = document.createElement('a');
     a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+};
+
+export const downloadText = (content: string, filename: string) => {
+    const a = document.createElement('a');
+    a.href = "data:text/markdown;charset=utf-8," + encodeURIComponent(content);
     a.download = filename;
     document.body.appendChild(a);
     a.click();

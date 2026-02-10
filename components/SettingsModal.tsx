@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Settings, X, Type, CheckCircle2, Database, Download, Upload, Archive, AlertTriangle, Sparkles, Layers } from 'lucide-react';
-import { Settings as SettingsType } from '../types';
+import { Settings, X, Type, CheckCircle2, Database, Download, Upload, Archive, AlertTriangle, Sparkles, Layers, Grid } from 'lucide-react';
+import { Settings as SettingsType, Density } from '../types';
+import { DENSITY_CONFIG } from '../constants';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -27,10 +28,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
         { id: 'mono', name: 'Code (Mono)', class: 'font-mono' },
     ];
 
-    const fontSizes: { id: SettingsType['fontSize']; name: string; class: string; label: string }[] = [
-        { id: 'compact', name: 'Compact', class: 'text-base', label: 'Aa' },
-        { id: 'normal', name: 'Normal', class: 'text-lg', label: 'Aa' },
-        { id: 'large', name: 'Large', class: 'text-xl', label: 'Aa' },
+    const densities: { id: Density; name: string; description: string }[] = [
+        { id: 'compact', name: 'Compact', description: `${DENSITY_CONFIG.compact.itemsPerPage} items/page` },
+        { id: 'comfortable', name: 'Comfortable', description: `${DENSITY_CONFIG.comfortable.itemsPerPage} items/page` },
+        { id: 'spacious', name: 'Spacious', description: `${DENSITY_CONFIG.spacious.itemsPerPage} items/page` },
     ];
     
     return (
@@ -43,8 +44,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                 <div className="p-6 space-y-8 overflow-y-auto max-h-[70vh]">
                      {/* Appearance */}
                      <div>
-                        <label className="flex items-center gap-2 text-sm font-semibold text-ink-dim uppercase tracking-wider mb-3"><Type size={16}/> Typography</label>
-                        <div className="grid grid-cols-1 gap-2 mb-3">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-ink-dim uppercase tracking-wider mb-3"><Type size={16}/> Typography & Layout</label>
+                        <div className="grid grid-cols-1 gap-2 mb-4">
                             {fontFamilies.map(font => (
                                 <button key={font.id} onClick={() => onUpdateSettings({ ...settings, fontFamily: font.id })} title={`Select ${font.name} Font`} className={`flex items-center justify-between px-4 py-3 rounded-lg border text-left transition-all ${settings.fontFamily === font.id ? 'bg-primary-50 border-primary text-primary ring-1 ring-primary' : 'bg-input-bg border-paper-line text-ink hover:border-primary/50'}`}>
                                     <span className={`${font.class} text-lg`}>{font.name}</span>
@@ -52,11 +53,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                                 </button>
                             ))}
                         </div>
-                        <div className="flex gap-3 bg-input-bg p-1 rounded-lg border border-paper-line">
-                            {fontSizes.map(size => (
-                                <button key={size.id} onClick={() => onUpdateSettings({ ...settings, fontSize: size.id })} title={`Select ${size.name} Size`} className={`flex-1 py-2 rounded-md transition-all flex flex-col items-center justify-center gap-1 ${settings.fontSize === size.id ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5' : 'text-ink-dim hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`}>
-                                    <span className={`leading-none ${size.class === 'text-base' ? 'text-xs' : size.class === 'text-lg' ? 'text-base' : 'text-xl'} font-bold`}>{size.label}</span>
-                                    <span className="text-[10px] uppercase tracking-wide opacity-70">{size.name}</span>
+                        
+                        <label className="flex items-center gap-2 text-xs font-semibold text-ink-dim uppercase tracking-wider mb-2"><Grid size={14}/> Density</label>
+                        <div className="flex gap-2 bg-input-bg p-1 rounded-lg border border-paper-line">
+                            {densities.map(d => (
+                                <button key={d.id} onClick={() => onUpdateSettings({ ...settings, density: d.id })} className={`flex-1 py-2 rounded-md transition-all flex flex-col items-center justify-center gap-1 ${settings.density === d.id ? 'bg-white dark:bg-gray-700 text-primary shadow-sm ring-1 ring-black/5' : 'text-ink-dim hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`}>
+                                    <span className="font-bold text-sm">{d.name}</span>
+                                    <span className="text-[9px] opacity-70">{d.description}</span>
                                 </button>
                             ))}
                         </div>
@@ -84,7 +87,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                                 Archive MD
                             </button>
                             <button onClick={onCompactPages} title="Re-arrange tasks to fill empty slots on pages" className="col-span-2 flex items-center justify-center gap-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/30 py-3 rounded-lg text-orange-600 dark:text-orange-400 transition-all font-medium text-sm">
-                                <Layers size={14} /> Compact Pages (Fill Gaps)
+                                <Layers size={14} /> Re-Calculate Pages
                             </button>
                         </div>
                         

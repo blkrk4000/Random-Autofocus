@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { Target, Filter, Eraser, X, Download, Clipboard, ListChecks, Dices, Sparkles, Check, Pin, Highlighter, Ban, Trash2, Redo2, Tags, FileJson } from 'lucide-react';
 import { Todo, Settings } from '../types';
 import TaskItem from './TaskItem';
-import { ITEMS_PER_PAGE } from '../constants';
+import { DENSITY_CONFIG } from '../constants';
 import { generateMarkdown, downloadJSON, copyToClipboard } from '../utils/exportUtils';
 
 interface NotebookPageProps {
@@ -35,7 +35,7 @@ interface NotebookPageProps {
     onCopyMD: () => void;
     onHighlightTodo: (id: string | null) => void; 
     onOpenBatchTag: () => void;
-    onDeletePage: () => void; // New prop
+    onDeletePage: () => void;
 }
 
 const DiceRoller = ({ onRoll, disabled }: { onRoll: () => void, disabled: boolean }) => {
@@ -86,6 +86,11 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
     
     const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
 
+    // Retrieve density configuration
+    const density = DENSITY_CONFIG[settings.density] || DENSITY_CONFIG.comfortable;
+    const itemsPerPage = density.itemsPerPage;
+    const lineHeight = density.lineHeight;
+
     // Scroll into view when highlight changes
     useEffect(() => { 
         if (highlightedTodoId && itemRefs.current[highlightedTodoId]) {
@@ -96,10 +101,8 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
     // Keyboard Navigation & Action Logic
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore if user is typing in an input or textarea
             if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
 
-            // Helper to apply action to ALL selected items OR just the highlighted one
             const applyAction = (action: (id: string) => void) => {
                 if (selectionMode && selectedIds.size > 0) {
                     Array.from(selectedIds).forEach((id: string) => action(id));
@@ -108,9 +111,8 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                 }
             };
 
-            // Navigation
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                e.preventDefault(); // Prevent page scrolling
+                e.preventDefault(); 
                 
                 const currentIndex = todos.findIndex(t => t.id === highlightedTodoId);
                 let nextIndex = 0;
@@ -125,23 +127,14 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                 if (nextId) {
                     onHighlightTodo(nextId);
                     
-                    // Multi-select logic (Shift + Arrow)
                     if (e.shiftKey) {
                         if (!selectionMode) onToggleSelectionMode();
                         
                         if (highlightedTodoId) {
                             const isNextSelected = selectedIds.has(nextId);
-                            
-                            // Smart Selection Logic:
-                            // 1. If we move into an ALREADY selected item, we assume the user is "backtracking" 
-                            //    and wants to deselect the item they are leaving.
-                            // 2. If we move into an UNSELECTED item, we assume the user is "expanding" the selection.
-                            
                             if (isNextSelected) {
-                                // Backtracking: Deselect the current item (the one we are leaving)
                                 if (selectedIds.has(highlightedTodoId)) onToggleSelect(highlightedTodoId);
                             } else {
-                                // Expanding: Ensure current is selected (anchor), then select next
                                 if (!selectedIds.has(highlightedTodoId)) onToggleSelect(highlightedTodoId);
                                 if (!selectedIds.has(nextId)) onToggleSelect(nextId);
                             }
@@ -151,7 +144,6 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                 return;
             }
 
-            // Actions
             if (highlightedTodoId || (selectionMode && selectedIds.size > 0)) {
                 const todo = highlightedTodoId ? todos.find(t => t.id === highlightedTodoId) : null;
 
@@ -163,7 +155,6 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                     if (e.shiftKey) {
                         applyAction(onReenterTodo);
                     } else {
-                        // Edit only works for single item
                         if (todo && (!selectionMode || selectedIds.size <= 1)) onOpenModal(todo);
                     }
                 } else if (e.key.toLowerCase() === 'f' && !(e.metaKey || e.ctrlKey)) {
@@ -206,14 +197,20 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
         downloadJSON(selected, 'autofocus_selection.json');
     };
 
+    // Calculate dynamic background for lines - APPLIED TO UL
+    const bgStyle = {
+        backgroundImage: `linear-gradient(transparent ${lineHeight - 1}px, var(--color-paper-line) ${lineHeight}px)`,
+        backgroundSize: `100% ${lineHeight}px`,
+        lineHeight: `${lineHeight}px`
+    };
+
     return (
-        <div className="w-full max-w-3xl mx-auto bg-paper shadow-xl relative rounded-lg border border-paper-line/50 theme-transition mb-8 min-h-[820px] flex flex-col">
+        <div className="w-full max-w-3xl mx-auto bg-paper shadow-xl relative rounded-lg border border-paper-line/50 theme-transition mb-8 min-h-[800px]">
             <div className={`h-16 rounded-t-lg border-b border-paper-line flex items-center px-8 pl-16 justify-between z-20 relative bg-paper/90 backdrop-blur-sm ${isFocusMode ? 'bg-amber-100/50 dark:bg-amber-900/20' : statusFilter ? 'bg-indigo-50/80 dark:bg-indigo-900/20' : ''}`}>
                 <div className="flex items-center gap-4">
                     <span className={`text-lg font-bold tracking-tight font-mono flex items-center gap-3 ${isFocusMode ? 'text-amber-600' : statusFilter ? 'text-primary' : 'text-ink-dim'}`}>
                         {isFocusMode ? 'Focus Sheet' : statusFilter ? (statusFilter === 'dismissed' ? 'Review: Dismissed' : statusFilter === 'completed' ? 'Archive: Done' : 'Backlog: Open') : `Page ${pageIndex + 1}`}
                         
-                        {/* DELETE PAGE BUTTON (Only visible in normal page view) */}
                         {!isFocusMode && !statusFilter && (
                              <button onClick={onDeletePage} className="p-1.5 text-ink-dim hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors group" title="Delete this page and all its tasks">
                                  <Trash2 size={14} className="opacity-50 group-hover:opacity-100" />
@@ -243,10 +240,14 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                 </div>
             </div>
             <div className="absolute top-0 bottom-0 left-12 w-px bg-paper-margin z-10 opacity-40 pointer-events-none"></div>
-            <div className={`notebook-lines flex-1 px-8 pb-14 rounded-b-lg relative z-0 ${isFocusMode ? 'bg-amber-50/30 dark:bg-amber-900/10' : statusFilter ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
-                 {isFocusMode && todos.length === 0 && (<div className="absolute inset-0 flex flex-col items-center justify-center text-ink-dim pointer-events-none"><Target size={48} className="mb-4 opacity-50" /><p className="text-lg font-medium">No tasks in focus.</p></div>)}
-                 {statusFilter && todos.length === 0 && (<div className="absolute inset-0 flex flex-col items-center justify-center text-ink-dim pointer-events-none"><Filter size={48} className="mb-4 opacity-50" /><p className="text-lg font-medium">No tasks found in this filter.</p></div>)}
-                <ul className="pl-6">
+            
+            {/* Page Content Container - Block layout, no flex-grow needed as content pushes height */}
+            <div className={`px-8 pb-14 rounded-b-lg relative z-0 ${isFocusMode ? 'bg-amber-50/30 dark:bg-amber-900/10' : statusFilter ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
+                 {isFocusMode && todos.length === 0 && (<div className="py-20 flex flex-col items-center justify-center text-ink-dim pointer-events-none"><Target size={48} className="mb-4 opacity-50" /><p className="text-lg font-medium">No tasks in focus.</p></div>)}
+                 {statusFilter && todos.length === 0 && (<div className="py-20 flex flex-col items-center justify-center text-ink-dim pointer-events-none"><Filter size={48} className="mb-4 opacity-50" /><p className="text-lg font-medium">No tasks found in this filter.</p></div>)}
+                
+                {/* UL gets the background styles now, so lines stop exactly where items stop */}
+                <ul className="pl-6" style={bgStyle}>
                     {todos.map((todo) => (
                         <TaskItem 
                             key={todo.id} 
@@ -267,9 +268,10 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
                             onCancelTodo={props.onCancelTodo}
                             onDeleteTodo={props.onDeleteTodo}
                             statusFilter={statusFilter}
+                            lineHeight={lineHeight}
                         />
                     ))}
-                    {Array.from({ length: Math.max(0, ITEMS_PER_PAGE - todos.length) }).map((_, i) => <li key={`empty-${i}`} className="h-[28px]" />)}
+                    {Array.from({ length: Math.max(0, itemsPerPage - todos.length) }).map((_, i) => <li key={`empty-${i}`} style={{height: lineHeight}} />)}
                 </ul>
             </div>
 
