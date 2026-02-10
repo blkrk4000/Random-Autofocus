@@ -370,7 +370,8 @@ const App = () => {
             if (isCtrlOrMeta && key === 'n') { e.preventDefault(); setIsInputExpanded(true); }
             if (isCtrlOrMeta && ((e.shiftKey && key === 's') || key === 'b')) { e.preventDefault(); setIsSidebarOpen(p => !p); }
             if (isCtrlOrMeta && (key === 'f' || key === 'k')) { e.preventDefault(); document.querySelector<HTMLInputElement>('input[placeholder="Search..."]')?.focus(); }
-            if (key === 'r' && !isCtrlOrMeta && !e.shiftKey) { e.preventDefault(); handleRollDice(); }
+            // FIX: Only trigger randomizer if input is NOT active
+            if (key === 'r' && !isCtrlOrMeta && !e.shiftKey && !isInputActive) { e.preventDefault(); handleRollDice(); }
             
             // Go To Page Modal
             if (isCtrlOrMeta && key === 'g') {
