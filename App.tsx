@@ -1,13 +1,17 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Clipboard, Download, X, ArrowRight } from 'lucide-react';
-import { Settings as SettingsType, TimerState } from './types';
+import { Settings as SettingsType } from './types';
 import { DENSITY_CONFIG } from './constants';
-import { getStorageKey, generateId } from './services/storageService';
-import { playNotificationSound } from './services/soundService';
+import { generateId } from './services/storageService';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTodos } from './hooks/useTodos';
 import { useTheme } from './hooks/useTheme';
+import { useAppTimer } from './hooks/useAppTimer';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useTodoFiltering } from './hooks/useTodoFiltering';
+import { useRandomizer } from './hooks/useRandomizer';
+import { useTagOperations } from './hooks/useTagOperations';
 import { generateMarkdown, downloadJSON, downloadText, parseImportFile, copyToClipboard } from './utils/exportUtils';
 import { getDemoData } from './utils/demoData';
 
@@ -22,13 +26,6 @@ import GoToPageModal from './components/GoToPageModal';
 import TimeUpModal from './components/TimeUpModal';
 import Header from './components/Header';
 import InputArea from './components/InputArea';
-
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => { const handler = setTimeout(() => { setDebouncedValue(value); }, delay); return () => { clearTimeout(handler); }; }, [value, delay]);
-    return debouncedValue;
-}
 
 const App = () => {
     // -- Custom Hooks --
@@ -61,36 +58,13 @@ const App = () => {
 
     // Handle Density Changes & Migration from 'fontSize'
     useEffect(() => {
-        // If settings have the old 'fontSize' property, migrate to 'density'
         const rawSettings = appSettings as any;
         if (rawSettings.fontSize) {
              let newDensity: 'compact' | 'comfortable' | 'spacious' = 'comfortable';
              if (rawSettings.fontSize === 'compact') newDensity = 'compact';
              if (rawSettings.fontSize === 'large') newDensity = 'spacious';
-             
-             // Remove fontSize and set density
              const { fontSize, ...rest } = rawSettings;
              setAppSettings({ ...rest, density: newDensity });
-        }
-        
-        // Auto-repaginate when density changes
-        const config = DENSITY_CONFIG[appSettings.density] || DENSITY_CONFIG.comfortable;
-        // We only want to trigger repagination if necessary to avoid loops, but since repaginate
-        // is stable and idempotent for the same items/density, it's safe-ish.
-        // However, useEffect runs on mount.
-        // Let's assume on mount we want to ensure pages are correct for the current setting.
-        if (todos.length > 0) {
-             // Check if we need to repaginate by checking the first page count? 
-             // Simpler: Just run it. The user won't notice a millisecond calculation.
-             // Warning: This updates 'todos', which triggers a re-render.
-             // To avoid infinite loops, we need to be careful. 
-             // Actually, `repaginate` updates `todos`. `todos` is in dependency array of `repaginate` (via `useTodos`).
-             // So this effect needs to NOT depend on `todos` directly, or rely on `repaginate` identity.
-             
-             // For now, let's rely on manual compacting or just assume the user
-             // accepts a "Compact Pages" click in settings to fix big gaps,
-             // BUT we DO need to update page indexes if the density changes drastically (e.g. 25 -> 50).
-             // Let's do it once on density change.
         }
     }, [appSettings.density]); 
 
@@ -98,6 +72,7 @@ const App = () => {
     const currentDensityConfig = DENSITY_CONFIG[appSettings.density] || DENSITY_CONFIG.comfortable;
     const itemsPerPage = currentDensityConfig.itemsPerPage;
 
+    // -- Navigation & View State --
     const [activePageIndex, setActivePageIndex] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [highlightedTodoId, setHighlightedTodoId] = useState<string | null>(null);
@@ -107,7 +82,7 @@ const App = () => {
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState(new Set<string>());
     
-    // Modal States
+    // -- Modal States --
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isTimerSettingsOpen, setIsTimerSettingsOpen] = useState(false);
     const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
@@ -116,44 +91,42 @@ const App = () => {
     const [isTimeUpOpen, setIsTimeUpOpen] = useState(false);
     const [editingTodo, setEditingTodo] = useState<any | null>(null);
 
-    // -- Timer State --
-    const [timerState, setTimerState] = useState<TimerState>(() => {
-        const defaultDuration = (appSettings.timerDefaultDuration || 25) * 60;
-        const saved = localStorage.getItem(getStorageKey('global_timer'));
-        if (saved) {
-            try {
-                const p = JSON.parse(saved);
-                const elapsed = p.isRunning ? Math.floor((Date.now() - p.lastTick)/1000) : 0;
-                const timeLeft = Math.max(0, p.timeLeft - elapsed);
-                return { timeLeft, isRunning: p.isRunning && timeLeft > 0, initialDuration: p.initialDuration || defaultDuration };
-            } catch { return { timeLeft: defaultDuration, isRunning: false, initialDuration: defaultDuration }; }
-        }
-        return { timeLeft: defaultDuration, isRunning: false, initialDuration: defaultDuration };
+    // -- Derived State (Filtering) --
+    const { totalPages, visibleTodos, pageCounts, tagCounts, allContexts } = useTodoFiltering({
+        todos,
+        searchQuery,
+        statusFilter,
+        isFocusMode,
+        activePageIndex
+    });
+
+    // -- Randomizer Logic --
+    const { handleRollDice } = useRandomizer({
+        todos,
+        isFocusMode,
+        itemsPerPage,
+        highlightedTodoId,
+        setHighlightedTodoId,
+        setActivePageIndex,
+        setSearchQuery,
+        setStatusFilter
+    });
+
+    // -- Tag Operations --
+    const { handleRenameTag, handleDeleteTag, handleBatchAddTag, handleBatchRemoveTag } = useTagOperations(setTodos, selectedIds);
+
+    // -- Timer Hook --
+    const { timerState, setTimerState } = useAppTimer(appSettings, () => {
+        if (appSettings.timerShowMessage !== false) setIsTimeUpOpen(true);
     });
 
     // -- Refs --
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // -- Derived Data --
-    const totalPages = useMemo(() => todos.length === 0 ? 1 : Math.max(...todos.map(t => t.pageIndex)) + 1, [todos]);
-    
-    const visibleTodos = useMemo(() => { 
-        const q = searchQuery.trim().toLowerCase(); 
-        if (q) return todos.filter(t => t.text.toLowerCase().includes(q)); 
-        if (statusFilter === 'dismissed') return todos.filter(t => t.isDismissed);
-        if (statusFilter === 'completed') return todos.filter(t => t.isCompleted || t.isCancelled); 
-        if (statusFilter === 'open') return todos.filter(t => !t.isCompleted && !t.isDismissed && !t.isCancelled);
-        if (isFocusMode) return todos.filter(t => t.isFocused && !t.isCompleted && !t.isDismissed && !t.isCancelled); 
-        return todos.filter(t => t.pageIndex === activePageIndex); 
-    }, [todos, activePageIndex, searchQuery, isFocusMode, statusFilter]);
-    
-    const pageCounts = useMemo(() => { const c: Record<number, any> = {}; todos.forEach(t => { if (!c[t.pageIndex]) c[t.pageIndex] = { open: 0, dismissed: 0, done: 0, cancelled: 0 }; if (t.isCompleted) c[t.pageIndex].done++; else if(t.isCancelled) c[t.pageIndex].cancelled++; else if (t.isDismissed) c[t.pageIndex].dismissed++; else c[t.pageIndex].open++; }); return c; }, [todos]);
-    const tagCounts = useMemo(() => { const c: Record<string, number> = {}; todos.forEach(t => { const matches = t.text.match(/[@#][\w-]+/g); if (matches) { matches.forEach(tag => { if (!c[tag]) c[tag] = 0; if (!t.isCompleted && !t.isDismissed && !t.isCancelled) c[tag]++; }); } }); return c; }, [todos]);
-    const allContexts = useMemo(() => { const s = new Set<string>(); todos.forEach(t => t.text.match(/[@#][\w-]+/g)?.forEach(m => s.add(m))); return Array.from(s).sort(); }, [todos]);
-
     // -- Helper Functions --
+    const getDateString = () => new Date().toISOString().split('T')[0];
+
     const handleAddSubtasks = (tasks: string[]) => {
-        // "Manual" implementation of adding multiple tasks to handle smart paste
         const startPage = getNextAvailablePageIndex(itemsPerPage);
         const newTodos = tasks.map((t, i) => ({ 
             id: generateId(), 
@@ -177,93 +150,6 @@ const App = () => {
             }); 
             return merged; 
         });
-    };
-
-    // -- Actions --
-    const handleRollDice = () => {
-        // --- FOCUS MODE LOGIC ---
-        if (isFocusMode) {
-            const focusTasks = todos.filter(t => t.isFocused && !t.isCompleted && !t.isCancelled && !t.isDismissed);
-            
-            if (focusTasks.length === 0) {
-                alert("No open tasks in Focus Mode!");
-                return;
-            }
-            
-            const randomTask = focusTasks[Math.floor(Math.random() * focusTasks.length)];
-            setHighlightedTodoId(randomTask.id);
-            return;
-        }
-
-        // --- NORMAL NOTEBOOK LOGIC (MARK FORSTER) ---
-        const hasOpenTasks = todos.some(t => !t.isCompleted && !t.isCancelled && !t.isDismissed);
-        if (!hasOpenTasks) {
-            alert("No open tasks found in the notebook!");
-            return;
-        }
-
-        let startIndex = -1;
-        if (highlightedTodoId) {
-            startIndex = todos.findIndex(t => t.id === highlightedTodoId);
-        }
-        if (startIndex === -1 && highlightedTodoId) {
-             setHighlightedTodoId(null);
-             startIndex = -1;
-        }
-
-        // Use DYNAMIC itemsPerPage from Settings
-        const roll = Math.floor(Math.random() * itemsPerPage) + 1;
-
-        let targetIndex = (startIndex + roll) % todos.length;
-        if (targetIndex < 0) targetIndex += todos.length;
-
-        let safetyCounter = 0;
-        while (
-            (todos[targetIndex].isCompleted || 
-             todos[targetIndex].isCancelled || 
-             todos[targetIndex].isDismissed) && 
-            safetyCounter < todos.length
-        ) {
-            targetIndex = (targetIndex + 1) % todos.length;
-            safetyCounter++;
-        }
-
-        const targetTask = todos[targetIndex];
-
-        setSearchQuery('');
-        setStatusFilter(null);
-        setActivePageIndex(targetTask.pageIndex);
-        setHighlightedTodoId(targetTask.id);
-    };
-
-    const handleRenameTag = (oldTag: string, newTag: string) => {
-        setTodos(prev => prev.map(t => {
-            if (t.text.includes(oldTag)) {
-                const newText = t.text.split(' ').map(word => word === oldTag ? newTag : word).join(' ');
-                return { ...t, text: newText, modifiedAt: Date.now() };
-            }
-            return t;
-        }));
-    };
-
-    const handleDeleteTag = (tag: string) => {
-         setTodos(prev => prev.map(t => {
-            if (t.text.includes(tag)) {
-                const newText = t.text.split(' ').filter(word => word !== tag).join(' ');
-                return { ...t, text: newText, modifiedAt: Date.now() };
-            }
-            return t;
-        }));
-    };
-
-    const handleBatchAddTag = (tag: string) => { 
-        if (!tag.trim()) return;
-        setTodos(prev => prev.map(t => selectedIds.has(t.id) && !t.text.includes(tag) ? { ...t, text: (t.text + ' ' + tag).trim() } : t)); 
-    };
-
-    const handleBatchRemoveTag = (tag: string) => { 
-        if (!tag.trim()) return;
-        setTodos(prev => prev.map(t => selectedIds.has(t.id) ? { ...t, text: t.text.split(' ').filter(w => w !== tag).join(' ') } : t)); 
     };
 
     const handleDeletePage = () => {
@@ -300,12 +186,6 @@ const App = () => {
         }
     };
     
-    // Automatically repaginate when density changes to keep view consistent? 
-    // Or let user do it manually? The user experience is better if we do it automatically,
-    // otherwise they see empty pages or overflowing pages.
-    // Let's rely on the user clicking "Re-Calculate Pages" in settings for major shifts, 
-    // BUT we must pass 'itemsPerPage' to the randomizer/add logic correctly (which we did).
-    
     const handleStartBreak = () => {
         setIsTimeUpOpen(false);
         const breakMins = appSettings.timerBreakDuration || 5;
@@ -315,32 +195,6 @@ const App = () => {
             isRunning: true
         });
     };
-
-    // -- Effects --
-    useEffect(() => {
-        localStorage.setItem(getStorageKey('global_timer'), JSON.stringify({ ...timerState, lastTick: Date.now() }));
-        let interval: any = null;
-        if (timerState.isRunning && timerState.timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimerState(prev => {
-                    // Logic to handle Time Up
-                    if (prev.timeLeft <= 1) {
-                         if (appSettings.timerShowMessage !== false) setIsTimeUpOpen(true);
-                         playNotificationSound(appSettings.timerSound); // Play Configured Sound
-                         return { ...prev, timeLeft: 0, isRunning: false };
-                    }
-                    return { ...prev, timeLeft: prev.timeLeft - 1 };
-                });
-            }, 1000);
-        }
-        return () => clearInterval(interval);
-    }, [timerState.isRunning, timerState.timeLeft, appSettings.timerSound, appSettings.timerShowMessage]);
-
-    useEffect(() => { 
-        if (activePageIndex >= (todos.length === 0 ? 1 : Math.max(...todos.map(t => t.pageIndex)) + 1)) {
-            setActivePageIndex(Math.max(0, (todos.length === 0 ? 1 : Math.max(...todos.map(t => t.pageIndex)) + 1) - 1));
-        }
-    }, [todos, activePageIndex]);
 
     // -- Smart Paste --
     const handlePaste = (e: React.ClipboardEvent) => {
@@ -360,39 +214,21 @@ const App = () => {
     };
 
     // -- Keyboard Shortcuts --
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            const isCtrlOrMeta = e.metaKey || e.ctrlKey;
-            const key = e.key.toLowerCase();
-            const activeTag = document.activeElement?.tagName;
-            const isInputActive = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
-
-            if (isCtrlOrMeta && key === 'n') { e.preventDefault(); setIsInputExpanded(true); }
-            if (isCtrlOrMeta && ((e.shiftKey && key === 's') || key === 'b')) { e.preventDefault(); setIsSidebarOpen(p => !p); }
-            if (isCtrlOrMeta && (key === 'f' || key === 'k')) { e.preventDefault(); document.querySelector<HTMLInputElement>('input[placeholder="Search..."]')?.focus(); }
-            // FIX: Only trigger randomizer if input is NOT active
-            if (key === 'r' && !isCtrlOrMeta && !e.shiftKey && !isInputActive) { e.preventDefault(); handleRollDice(); }
-            
-            // Go To Page Modal
-            if (isCtrlOrMeta && key === 'g') {
-                e.preventDefault();
-                setIsGoToPageOpen(true);
-            }
-
-            if (isCtrlOrMeta && e.shiftKey && key === 't') { e.preventDefault(); setTimerState(prev => ({...prev, isRunning: !prev.isRunning})); }
-            if (isCtrlOrMeta && e.shiftKey && key === 'f') { e.preventDefault(); setIsFocusMode(p => !p); setSearchQuery(''); setStatusFilter(null); }
-            if (isCtrlOrMeta && key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-
-            if (e.key === 'Escape') { 
-                setIsInputExpanded(false); 
-                setSearchQuery('');
-                setHighlightedTodoId(null);
-                if (isInputActive && document.activeElement instanceof HTMLElement) document.activeElement.blur();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, setIsSidebarOpen, totalPages, handleRollDice, itemsPerPage]); // Added itemsPerPage dependency
+    useKeyboardShortcuts({
+        onNewTask: () => setIsInputExpanded(true),
+        onToggleSidebar: () => setIsSidebarOpen(p => !p),
+        onSearch: () => document.querySelector<HTMLInputElement>('input[placeholder="Search..."]')?.focus(),
+        onRandom: handleRollDice,
+        onGoToPage: () => setIsGoToPageOpen(true),
+        onToggleTimer: () => setTimerState(prev => ({...prev, isRunning: !prev.isRunning})),
+        onToggleFocus: () => { setIsFocusMode(p => !p); setSearchQuery(''); setStatusFilter(null); },
+        onUndo: undo,
+        onEscape: () => { 
+            setIsInputExpanded(false); 
+            setSearchQuery('');
+            setHighlightedTodoId(null);
+        }
+    }, [undo, setIsSidebarOpen, totalPages, handleRollDice, itemsPerPage]);
 
     // -- Handlers --
     const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => { 
@@ -413,12 +249,20 @@ const App = () => {
         const completed = todos.filter(t => t.isCompleted || t.isCancelled);
         if (completed.length === 0) return alert("No completed/cancelled tasks to archive.");
         if (!confirm(`Archive ${completed.length} tasks?`)) return;
-        downloadJSON(completed, "autofocus_archive.json");
+        downloadJSON(completed, `autofocus_archive_${getDateString()}.json`);
         archiveCompleted();
     };
 
     const handleToggleSelect = (id: string) => { setSelectedIds(prev => { const newSet = new Set(prev); if (newSet.has(id)) newSet.delete(id); else newSet.add(id); return newSet; }); };
     const handleSelectAll = () => { if (selectedIds.size === visibleTodos.length) setSelectedIds(new Set()); else setSelectedIds(new Set(visibleTodos.map(t => t.id))); };
+
+    // -- Effects --
+    useEffect(() => { 
+        // Ensure active page is valid when todos change or density changes
+        if (activePageIndex >= totalPages) {
+            setActivePageIndex(Math.max(0, totalPages - 1));
+        }
+    }, [totalPages, activePageIndex]);
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-app-bg font-sans text-ink transition-colors duration-300 theme-transition">
@@ -429,14 +273,14 @@ const App = () => {
                 onClose={() => setIsSettingsOpen(false)} 
                 settings={appSettings} 
                 onUpdateSettings={setAppSettings} 
-                onExport={() => downloadJSON(todos, "autofocus_backup.json")} 
-                onExportMD={() => downloadText(generateMarkdown(todos, "Full Export"), "autofocus_backup.md")} 
+                onExport={() => downloadJSON(todos, `autofocus_backup_${getDateString()}.json`)} 
+                onExportMD={() => downloadText(generateMarkdown(todos, "Full Export"), `autofocus_backup_${getDateString()}.md`)} 
                 onImport={() => fileInputRef.current?.click()} 
                 onArchive={handleArchive} 
                 onArchiveMD={() => { 
                     downloadText(
                         generateMarkdown(todos.filter(t => t.isCompleted || t.isCancelled), "Archive"), 
-                        "autofocus_archive.md"
+                        `autofocus_archive_${getDateString()}.md`
                     ); 
                     archiveCompleted();
                 }}

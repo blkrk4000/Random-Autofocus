@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { CheckSquare, FileText, AtSign, Hash, ChevronDown, ChevronRight, Settings } from 'lucide-react';
+import { Dices, FileText, AtSign, Hash, ChevronDown, ChevronRight, Settings } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 
 interface SidebarProps {
@@ -19,8 +19,6 @@ const Sidebar: React.FC<SidebarProps> = ({ totalPages, activePageIndex, onPageSe
     
     // State for foldable sections
     const [sections, setSections] = useState(() => {
-        // We'll skip local storage for UI state like this to keep it simple for now, 
-        // or just default to open.
         return { pages: true, contexts: true, projects: true };
     });
 
@@ -41,10 +39,10 @@ const Sidebar: React.FC<SidebarProps> = ({ totalPages, activePageIndex, onPageSe
 
     return (
         <div className="w-full bg-sidebar-bg text-sidebar-fg flex flex-col h-full border-r border-sidebar-fg/10 theme-transition">
-            {/* Added pt-8 specifically for Electron "traffic lights" (red/yellow/green buttons) */}
-            <div className="h-16 flex-shrink-0 border-b border-sidebar-fg/10 flex items-center px-6 gap-3 mt-6 drag-region">
+            {/* Standard Header without Electron drag region or extra padding */}
+            <div className="h-16 flex-shrink-0 border-b border-sidebar-fg/10 flex items-center px-6 gap-3 mt-2">
                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                     <CheckSquare size={20} strokeWidth={3} />
+                     <Dices size={20} strokeWidth={2.5} />
                  </div>
                  <div className="flex flex-col justify-center">
                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 leading-none mb-0.5">Mark Forster's</span>

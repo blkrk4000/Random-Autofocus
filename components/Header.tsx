@@ -32,7 +32,7 @@ const Header: React.FC<HeaderProps> = (props) => {
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
 
     return (
-        <header className="h-16 bg-app-bg border-b border-paper-line/30 flex items-center px-2 sm:px-4 gap-2 flex-shrink-0 z-40 shadow-sm transition-colors flex-nowrap drag-region">
+        <header className="h-16 bg-app-bg border-b border-paper-line/30 flex items-center px-2 sm:px-4 gap-2 flex-shrink-0 z-40 shadow-sm transition-colors flex-nowrap">
             
             {/* Left Group: Navigation & Undo */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
