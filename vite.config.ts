@@ -14,6 +14,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      // CRITICAL: Enable PWA generation in development mode
+      devOptions: {
+        enabled: true
+      },
       manifest: {
         name: 'Random Autofocus',
         short_name: 'Autofocus',
@@ -27,7 +31,13 @@ export default defineConfig({
         icons: [
           {
             src: 'favicon.svg',
-            sizes: 'any',
+            sizes: '192x192', // Explicit size helps Chrome heuristic
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
+          },
+          {
+            src: 'favicon.svg',
+            sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable'
           }
