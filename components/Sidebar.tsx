@@ -39,8 +39,8 @@ const Sidebar: React.FC<SidebarProps> = ({ totalPages, activePageIndex, onPageSe
 
     return (
         <div className="w-full bg-sidebar-bg text-sidebar-fg flex flex-col h-full border-r border-sidebar-fg/10 theme-transition">
-            {/* Standard Header without Electron drag region or extra padding */}
-            <div className="h-16 flex-shrink-0 border-b border-sidebar-fg/10 flex items-center px-6 gap-3 mt-2">
+            {/* Header cleaned up for Web/PWA use (removed top margin intended for electron drag region) */}
+            <div className="h-16 flex-shrink-0 border-b border-sidebar-fg/10 flex items-center px-6 gap-3">
                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                      <Dices size={20} strokeWidth={2.5} />
                  </div>
