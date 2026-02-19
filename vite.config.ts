@@ -14,9 +14,16 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
-      // DISABLE PWA in dev to prevent "White Screen" caching issues
       devOptions: {
-        enabled: false
+        enabled: true, // ENABLE PWA in dev mode
+        type: 'module', // IMPORTANT: Allows SW to work with Vite dev server
+        navigateFallback: 'index.html',
+        suppressWarnings: true,
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        navigateFallback: 'index.html', // Ensure SPA routing works offline
+        cleanupOutdatedCaches: true
       },
       manifest: {
         name: 'Random Autofocus',
