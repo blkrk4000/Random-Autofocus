@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { HelpCircle, X, Book, PlayCircle, Zap, Keyboard, FileJson, Dices, Coffee } from 'lucide-react';
+import { useState } from 'react';
+import { HelpCircle, X, Book, PlayCircle, Zap, Keyboard, FileJson, Dices } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 import { SHORTCUTS } from '../shortcuts';
 

@@ -40,7 +40,7 @@ const LinkifiedText: React.FC<{ text: string; onTagClick: (t: string) => void; o
 
 const TaskItem: React.FC<TaskItemProps> = ({ 
     todo, highlightedTodoId, selectionMode, selectedIds, onToggleSelect, 
-    onToggleFocus, onToggleTodo, onOpenModal, onTagClick, onTagRemove,
+    onToggleFocus, onToggleTodo, onOpenModal, onTagClick,
     onReenterTodo, onDismissTodo, onCancelTodo, onDeleteTodo, settings, itemRef, statusFilter,
     lineHeight
 }) => {
@@ -99,7 +99,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 {statusFilter && <span className="text-[10px] font-mono opacity-50 flex-shrink-0 bg-black/5 dark:bg-white/10 px-1 rounded">P{todo.pageIndex+1}</span>} 
                 {isProject && !todo.isCompleted && !todo.isCancelled && <FolderKanban size={14} className="text-fuchsia-500 flex-shrink-0" />}
                 <span className="truncate">
-                    <LinkifiedText text={todo.text} onTagClick={onTagClick} onTagRemove={(tag) => { const newText = todo.text.replace(tag, '').replace(/\s+/, ' ').trim(); const notes = todo.notes; onOpenModal({...todo, text: newText}); }} />
+                    <LinkifiedText text={todo.text} onTagClick={onTagClick} onTagRemove={(tag) => { const newText = todo.text.replace(tag, '').replace(/\s+/, ' ').trim(); onOpenModal({...todo, text: newText}); }} />
                 </span>
                 {todo.notes && <StickyNote size={12} className="text-ink-dim flex-shrink-0 ml-1 opacity-70" fill="currentColor" />}
             </span>

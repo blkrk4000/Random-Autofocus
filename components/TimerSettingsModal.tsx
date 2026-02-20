@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, MoveVertical, MessageSquare, Volume2, Bell, Timer, Coffee, Eye } from 'lucide-react';
+import { X, MoveVertical, MessageSquare, Volume2, Bell, Timer, Coffee } from 'lucide-react';
 import { Settings } from '../types';
 import { playNotificationSound } from '../services/soundService';
 
