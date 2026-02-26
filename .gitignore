@@ -54,3 +54,6 @@ electron/main.cjs
 
 # Testing
 coverage/
+
+# AI Studio Migration History
+migrated_prompt_history/
