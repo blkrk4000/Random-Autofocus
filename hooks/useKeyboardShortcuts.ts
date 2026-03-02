@@ -7,19 +7,35 @@ interface ShortcutHandlers {
     onSearch: () => void;
     onRandom: () => void;
     onGoToPage: () => void;
+    onGoToFirstPage: () => void;
+    onGoToLastPage: () => void;
     onToggleTimer: () => void;
     onToggleFocus: () => void;
     onUndo: () => void;
     onEscape: () => void;
 }
 
-export const useKeyboardShortcuts = (handlers: ShortcutHandlers, deps: any[] = []) => {
+export const useKeyboardShortcuts = (handlers: ShortcutHandlers, disabled: boolean = false, deps: any[] = []) => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const isCtrlOrMeta = e.metaKey || e.ctrlKey;
             const key = e.key.toLowerCase();
             const activeTag = document.activeElement?.tagName;
             const isInputActive = activeTag === 'INPUT' || activeTag === 'TEXTAREA';
+
+            // Escape should always work to close things
+            if (e.key === 'Escape') { 
+                handlers.onEscape();
+                if (isInputActive && document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                }
+                return;
+            }
+
+            // If a modal is open or user is typing, disable other custom shortcuts
+            if (disabled || isInputActive) {
+                return;
+            }
 
             // New Task: Ctrl + N
             if (isCtrlOrMeta && key === 'n') { 
@@ -33,14 +49,14 @@ export const useKeyboardShortcuts = (handlers: ShortcutHandlers, deps: any[] = [
                 handlers.onToggleSidebar(); 
             }
             
-            // Search: Ctrl + F or Ctrl + K
-            if (isCtrlOrMeta && (key === 'f' || key === 'k')) { 
+            // Search: Ctrl + F
+            if (isCtrlOrMeta && key === 'f' && !e.shiftKey) { 
                 e.preventDefault(); 
                 handlers.onSearch(); 
             }
             
-            // Randomizer: r (only if not typing)
-            if (key === 'r' && !isCtrlOrMeta && !e.shiftKey && !isInputActive) { 
+            // Randomizer: r
+            if (key === 'r' && !isCtrlOrMeta && !e.shiftKey) { 
                 e.preventDefault(); 
                 handlers.onRandom(); 
             }
@@ -49,6 +65,18 @@ export const useKeyboardShortcuts = (handlers: ShortcutHandlers, deps: any[] = [
             if (isCtrlOrMeta && key === 'g') {
                 e.preventDefault();
                 handlers.onGoToPage();
+            }
+
+            // Go To First Page: Ctrl + ArrowUp
+            if (isCtrlOrMeta && key === 'arrowup') {
+                e.preventDefault();
+                handlers.onGoToFirstPage();
+            }
+
+            // Go To Last Page: Ctrl + ArrowDown
+            if (isCtrlOrMeta && key === 'arrowdown') {
+                e.preventDefault();
+                handlers.onGoToLastPage();
             }
 
             // Toggle Timer: Ctrl + Shift + T
@@ -67,14 +95,6 @@ export const useKeyboardShortcuts = (handlers: ShortcutHandlers, deps: any[] = [
             if (isCtrlOrMeta && key === 'z' && !e.shiftKey) { 
                 e.preventDefault(); 
                 handlers.onUndo(); 
-            }
-
-            // Escape
-            if (e.key === 'Escape') { 
-                handlers.onEscape();
-                if (isInputActive && document.activeElement instanceof HTMLElement) {
-                    document.activeElement.blur();
-                }
             }
         };
 

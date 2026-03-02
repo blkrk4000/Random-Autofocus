@@ -18,6 +18,19 @@ const GoToPageModal: React.FC<GoToPageModalProps> = ({ isOpen, onClose, onGo, to
         } 
     }, [isOpen]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                onClose();
+            }
+        };
+        if (isOpen) {
+            document.addEventListener('keydown', handleKeyDown);
+            return () => document.removeEventListener('keydown', handleKeyDown);
+        }
+    }, [isOpen, onClose]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const p = parseInt(page, 10);

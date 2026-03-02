@@ -214,12 +214,16 @@ const App = () => {
     };
 
     // -- Keyboard Shortcuts --
+    const isAnyModalOpen = isSettingsOpen || isTimerSettingsOpen || isTagManagerOpen || isBatchTagModalOpen || isGoToPageOpen || isTimeUpOpen || !!editingTodo;
+    
     useKeyboardShortcuts({
         onNewTask: () => setIsInputExpanded(true),
         onToggleSidebar: () => setIsSidebarOpen(p => !p),
         onSearch: () => document.querySelector<HTMLInputElement>('input[placeholder="Search..."]')?.focus(),
         onRandom: handleRollDice,
         onGoToPage: () => setIsGoToPageOpen(true),
+        onGoToFirstPage: () => setActivePageIndex(0),
+        onGoToLastPage: () => setActivePageIndex(Math.max(0, totalPages - 1)),
         onToggleTimer: () => setTimerState(prev => ({...prev, isRunning: !prev.isRunning})),
         onToggleFocus: () => { setIsFocusMode(p => !p); setSearchQuery(''); setStatusFilter(null); },
         onUndo: undo,
@@ -228,7 +232,7 @@ const App = () => {
             setSearchQuery('');
             setHighlightedTodoId(null);
         }
-    }, [undo, setIsSidebarOpen, totalPages, handleRollDice, itemsPerPage]);
+    }, isAnyModalOpen, [undo, setIsSidebarOpen, totalPages, handleRollDice, itemsPerPage, isAnyModalOpen]);
 
     // -- Handlers --
     const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => { 

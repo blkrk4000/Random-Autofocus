@@ -4,6 +4,17 @@ import { AlignLeft, X, StickyNote, Eye, Edit3, Save, Check } from 'lucide-react'
 import { Todo } from '../types';
 import { formatFullDate } from '../services/storageService';
 
+const renderTextWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+        if (part.match(urlRegex)) {
+            return <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>{part}</a>;
+        }
+        return part;
+    });
+};
+
 interface TaskDetailModalProps {
     todo: Todo | null;
     isOpen: boolean;
@@ -126,11 +137,11 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ todo, isOpen, onClose
                             const isUnchecked = trimmed.startsWith('- [ ]'); 
                             if (isChecked || isUnchecked) { 
                                 const content = line.replace(/- \[[ x]\]/, '').trim(); 
-                                return (<div key={i} className="flex items-start gap-3 py-1 group cursor-pointer" onClick={() => handleNoteCheckbox(i, isChecked)}><div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${isChecked ? 'bg-primary border-primary text-primary-fg' : 'border-ink-dim text-transparent group-hover:border-primary'}`}><Check size={10} strokeWidth={4} /></div><span className={`flex-1 ${isChecked ? 'line-through text-ink-dim' : 'text-ink'}`}>{content}</span></div>); 
+                                return (<div key={i} className="flex items-start gap-3 py-1 group cursor-pointer" onClick={() => handleNoteCheckbox(i, isChecked)}><div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${isChecked ? 'bg-primary border-primary text-primary-fg' : 'border-ink-dim text-transparent group-hover:border-primary'}`}><Check size={10} strokeWidth={4} /></div><span className={`flex-1 ${isChecked ? 'line-through text-ink-dim' : 'text-ink'}`}>{renderTextWithLinks(content)}</span></div>); 
                             } 
                             
                             // Plain text
-                            return <div key={i} className="min-h-[1.5em] py-0.5 whitespace-pre-wrap">{line}</div>; 
+                            return <div key={i} className="min-h-[1.5em] py-0.5 whitespace-pre-wrap">{renderTextWithLinks(line)}</div>; 
                         }) : <div className="text-ink-dim italic">No notes. Click to add details...</div>}
                     </div>)}</div>
                 </div>

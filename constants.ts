@@ -1,5 +1,7 @@
 
-export const APP_VERSION = 'v1.3.2';
+import packageJson from './package.json';
+
+export const APP_VERSION = `v${packageJson.version}`;
 
 export const DENSITY_CONFIG = {
     compact: {
