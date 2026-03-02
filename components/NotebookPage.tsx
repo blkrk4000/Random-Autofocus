@@ -112,6 +112,7 @@ const NotebookPage: React.FC<NotebookPageProps> = (props) => {
             };
 
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                if (e.metaKey || e.ctrlKey) return; // Let useKeyboardShortcuts handle Cmd/Ctrl + Arrow
                 e.preventDefault(); 
                 
                 const currentIndex = todos.findIndex(t => t.id === highlightedTodoId);
