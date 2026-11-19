@@ -105,7 +105,6 @@ const App = () => {
         todos,
         isFocusMode,
         itemsPerPage,
-        highlightedTodoId,
         setHighlightedTodoId,
         setActivePageIndex,
         setSearchQuery,

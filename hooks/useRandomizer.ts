@@ -1,33 +1,36 @@
-
 import { useCallback } from 'react';
 import { Todo } from '../types';
+import { useLocalStorage } from './useLocalStorage';
 
 interface UseRandomizerProps {
     todos: Todo[];
     isFocusMode: boolean;
     itemsPerPage: number;
-    highlightedTodoId: string | null;
     setHighlightedTodoId: (id: string | null) => void;
     setActivePageIndex: (index: number) => void;
     setSearchQuery: (query: string) => void;
     setStatusFilter: (status: string | null) => void;
 }
 
+const isOpen = (t: Todo) => !t.isCompleted && !t.isCancelled && !t.isDismissed;
+
 export const useRandomizer = ({
     todos,
     isFocusMode,
     itemsPerPage,
-    highlightedTodoId,
     setHighlightedTodoId,
     setActivePageIndex,
     setSearchQuery,
     setStatusFilter
 }: UseRandomizerProps) => {
 
+    // Position des letzten Würfelwurfs: gespeichert, damit sie Neuladen und Esc überlebt.
+    const [rollCursorId, setRollCursorId] = useLocalStorage<string | null>('roll_cursor', null);
+
     const handleRollDice = useCallback(() => {
         // --- FOCUS MODE LOGIC ---
         if (isFocusMode) {
-            const focusTasks = todos.filter(t => t.isFocused && !t.isCompleted && !t.isCancelled && !t.isDismissed);
+            const focusTasks = todos.filter(t => t.isFocused && isOpen(t));
             
             if (focusTasks.length === 0) {
                 alert("No open tasks in Focus Mode!");
@@ -40,48 +43,34 @@ export const useRandomizer = ({
         }
 
         // --- NORMAL NOTEBOOK LOGIC (MARK FORSTER) ---
-        const hasOpenTasks = todos.some(t => !t.isCompleted && !t.isCancelled && !t.isDismissed);
-        if (!hasOpenTasks) {
+        const openTodos = todos.filter(isOpen);
+        if (openTodos.length === 0) {
             alert("No open tasks found in the notebook!");
             return;
         }
 
-        let startIndex = -1;
-        if (highlightedTodoId) {
-            startIndex = todos.findIndex(t => t.id === highlightedTodoId);
-        }
-        // If highlighted ID not found (deleted/filtered), reset start index
-        if (startIndex === -1 && highlightedTodoId) {
-             setHighlightedTodoId(null);
-             startIndex = -1;
+        // Aktuelle Position in der Gesamtliste (-1 = noch keine / Aufgabe nicht mehr vorhanden)
+        const cursorIndex = rollCursorId ? todos.findIndex(t => t.id === rollCursorId) : -1;
+
+        // Anzahl offener Aufgaben bis einschließlich der Position -> nur offene zählen als Schritte.
+        // Ist die Positions-Aufgabe selbst nicht mehr offen, zählt der letzte offene Eintrag davor.
+        let openUpToCursor = 0;
+        for (let i = 0; i <= cursorIndex; i++) {
+            if (isOpen(todos[i])) openUpToCursor++;
         }
 
-        // Roll logic: Move forward X steps
+        // Roll logic: Move forward X open steps (wraps around at the end of the list)
         const roll = Math.floor(Math.random() * itemsPerPage) + 1;
-
-        let targetIndex = (startIndex + roll) % todos.length;
-        if (targetIndex < 0) targetIndex += todos.length;
-
-        // Skip over completed/cancelled/dismissed tasks
-        let safetyCounter = 0;
-        while (
-            (todos[targetIndex].isCompleted || 
-             todos[targetIndex].isCancelled || 
-             todos[targetIndex].isDismissed) && 
-            safetyCounter < todos.length
-        ) {
-            targetIndex = (targetIndex + 1) % todos.length;
-            safetyCounter++;
-        }
-
-        const targetTask = todos[targetIndex];
+        const targetOpenIndex = (openUpToCursor - 1 + roll) % openTodos.length;
+        const targetTask = openTodos[(targetOpenIndex + openTodos.length) % openTodos.length];
 
         // Reset view filters to show the result
         setSearchQuery('');
         setStatusFilter(null);
         setActivePageIndex(targetTask.pageIndex);
         setHighlightedTodoId(targetTask.id);
-    }, [todos, isFocusMode, itemsPerPage, highlightedTodoId, setHighlightedTodoId, setActivePageIndex, setSearchQuery, setStatusFilter]);
+        setRollCursorId(targetTask.id);
+    }, [todos, isFocusMode, itemsPerPage, rollCursorId, setRollCursorId, setHighlightedTodoId, setActivePageIndex, setSearchQuery, setStatusFilter]);
 
     return { handleRollDice };
 };
