@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TimerState, Settings } from '../types';
 import { getStorageKey } from '../services/storageService';
 import { playNotificationSound } from '../services/soundService';
@@ -22,25 +21,43 @@ export const useAppTimer = (
         return { timeLeft: defaultDuration, isRunning: false, initialDuration: defaultDuration };
     });
 
+    // Aktuelle Callbacks/Einstellungen in Refs, damit der Timer-Effekt nicht neu startet
+    const onTimeUpRef = useRef(onTimeUp);
+    const soundRef = useRef(settings.timerSound);
+    onTimeUpRef.current = onTimeUp;
+    soundRef.current = settings.timerSound;
+
+    // Zustand speichern (inkl. Zeitstempel, damit nach einem Neuladen die Restzeit stimmt)
     useEffect(() => {
         localStorage.setItem(getStorageKey('global_timer'), JSON.stringify({ ...timerState, lastTick: Date.now() }));
-        
-        let interval: any = null;
-        if (timerState.isRunning && timerState.timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimerState(prev => {
-                    // Logic to handle Time Up
-                    if (prev.timeLeft <= 1) {
-                         onTimeUp(); // Callback to parent
-                         playNotificationSound(settings.timerSound);
-                         return { ...prev, timeLeft: 0, isRunning: false };
-                    }
-                    return { ...prev, timeLeft: prev.timeLeft - 1 };
-                });
-            }, 1000);
-        }
-        return () => clearInterval(interval);
-    }, [timerState.isRunning, timerState.timeLeft, settings.timerSound, onTimeUp]);
+    }, [timerState]);
+
+    // Läuft der Timer, wird die Restzeit aus einem festen Endzeitpunkt berechnet.
+    // So bleibt sie auch korrekt, wenn der Browser den Tab im Hintergrund drosselt.
+    useEffect(() => {
+        if (!timerState.isRunning) return;
+
+        const endTime = Date.now() + timerState.timeLeft * 1000;
+
+        const tick = () => {
+            const left = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+            if (left <= 0) {
+                clearInterval(interval);
+                setTimerState(prev => ({ ...prev, timeLeft: 0, isRunning: false }));
+                onTimeUpRef.current();
+                playNotificationSound(soundRef.current);
+            } else {
+                setTimerState(prev => (prev.timeLeft === left ? prev : { ...prev, timeLeft: left }));
+            }
+        };
+
+        const interval = setInterval(tick, 1000);
+        document.addEventListener('visibilitychange', tick); // sofort nachziehen, wenn der Tab wieder sichtbar wird
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', tick);
+        };
+    }, [timerState.isRunning]);
 
     return { timerState, setTimerState };
 };

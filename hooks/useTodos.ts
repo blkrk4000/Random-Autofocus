@@ -199,6 +199,7 @@ export const useTodos = () => {
         deletePage,
         deleteAllTodos,
         historyLength: history.length,
+        saveHistory,
         getNextAvailablePageIndex
     };
 };

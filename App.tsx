@@ -32,7 +32,7 @@ const App = () => {
     const { 
         todos, addTodo, updateTodo, toggleTodo, dismissTodo, cancelTodo, deleteTodo, 
         toggleFocus, reenterTodo, clearFocus, undo, archiveCompleted, repaginate, importTodos, 
-        getNextAvailablePageIndex, setTodos, deletePage, deleteAllTodos, historyLength
+        getNextAvailablePageIndex, setTodos, deletePage, deleteAllTodos, historyLength, saveHistory
     } = useTodos();
     
     const { isDarkMode, setIsDarkMode, currentTheme, setCurrentTheme } = useTheme();
@@ -113,7 +113,7 @@ const App = () => {
     });
 
     // -- Tag Operations --
-    const { handleRenameTag, handleDeleteTag, handleBatchAddTag, handleBatchRemoveTag } = useTagOperations(setTodos, selectedIds);
+    const { handleRenameTag, handleDeleteTag, handleBatchAddTag, handleBatchRemoveTag } = useTagOperations(setTodos, selectedIds, saveHistory);
 
     // -- Timer Hook --
     const { timerState, setTimerState } = useAppTimer(appSettings, () => {

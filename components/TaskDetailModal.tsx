@@ -78,7 +78,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ todo, isOpen, onClose
         const cursor = e.target.selectionStart || 0;
         setCursorPos(cursor);
         
-        const match = val.slice(0, cursor).match(/([@#][\w-]*)$/);
+        const match = val.slice(0, cursor).match(/([@#][\p{L}\p{N}_-]*)$/u);
         if (match) {
             const fullMatch = match[1];
             const q = fullMatch.toLowerCase();
@@ -92,7 +92,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ todo, isOpen, onClose
     };
 
     const insertModalSuggestion = (s: string) => {
-        const before = modalTitle.slice(0, cursorPos).replace(/([@#][\w-]*)$/, s + ' ');
+        const before = modalTitle.slice(0, cursorPos).replace(/([@#][\p{L}\p{N}_-]*)$/u, s + ' ');
         const full = before + modalTitle.slice(cursorPos);
         setModalTitle(full);
         setShowSuggestions(false);

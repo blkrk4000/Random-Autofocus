@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Timer, Play, Pause, RotateCcw } from 'lucide-react';
 import { TimerState } from '../types';
 import { formatTime } from '../services/storageService';
+import { primeAudio } from '../services/soundService';
 
 interface GlobalTimerProps {
     timerState: TimerState;
@@ -65,7 +66,7 @@ const GlobalTimer: React.FC<GlobalTimerProps> = ({ timerState, setTimerState, de
                 </span>
             )}
             <div className="h-3 w-px bg-paper-line mx-0.5"></div>
-            <button onClick={() => setTimerState(p => ({...p, isRunning: !p.isRunning}))} title={timerState.isRunning ? "Pause Timer" : "Start Timer"} className="p-0.5 text-primary hover:scale-110 transition-transform">{timerState.isRunning ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}</button>
+            <button onClick={() => { primeAudio(); setTimerState(p => ({...p, isRunning: !p.isRunning})); }} title={timerState.isRunning ? "Pause Timer" : "Start Timer"} className="p-0.5 text-primary hover:scale-110 transition-transform">{timerState.isRunning ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}</button>
             <button onClick={handleReset} title="Reset Timer" className="p-0.5 text-ink-dim hover:text-ink hover:rotate-180 transition-transform"><RotateCcw size={14} /></button>
         </div>
     );

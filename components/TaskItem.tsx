@@ -26,14 +26,14 @@ interface TaskItemProps {
 }
 
 const LinkifiedText: React.FC<{ text: string; onTagClick: (t: string) => void; onTagRemove: (t: string) => void }> = ({ text, onTagClick, onTagRemove }) => {
-    const regex = /(https?:\/\/[^\s]+|[@#][\w-]+)/g;
+    const regex = /(https?:\/\/[^\s]+|[@#][\p{L}\p{N}_-]+)/gu;
     const parts = text.split(regex);
     const getEmoji = (url: string) => { try { const h = new URL(url).hostname; if(h.includes('google')) return '🔍'; return '🔗'; } catch { return '🔗'; } };
     
     return <>{parts.map((part, i) => { 
         if (part.match(/^https?:\/\//)) return <a key={i} href={part} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} title={part} className="text-primary hover:underline mx-1 relative z-30">{getEmoji(part)} {part.replace(/^https?:\/\/(www\.)?/, '').substring(0,20)+(part.length>25?'...':'')}</a>; 
-        if (part.match(/^@\w+/)) return <button key={i} title="Click to filter, Shift+Click to remove" onClick={(e) => { e.stopPropagation(); if(e.shiftKey && onTagRemove) onTagRemove(part); else onTagClick(part); }} className="text-primary font-bold mx-0.5 hover:underline cursor-pointer bg-transparent border-none p-0">{part}</button>; 
-        if (part.match(/^#[\w-]+/)) return <button key={i} title="Click to filter, Shift+Click to remove" onClick={(e) => { e.stopPropagation(); if(e.shiftKey && onTagRemove) onTagRemove(part); else onTagClick(part); }} className="text-fuchsia-600 dark:text-fuchsia-400 font-bold mx-0.5 hover:underline cursor-pointer bg-transparent border-none p-0">{part}</button>; 
+        if (part.match(/^@[\p{L}\p{N}_-]+/u)) return <button key={i} title="Click to filter, Shift+Click to remove" onClick={(e) => { e.stopPropagation(); if(e.shiftKey && onTagRemove) onTagRemove(part); else onTagClick(part); }} className="text-primary font-bold mx-0.5 hover:underline cursor-pointer bg-transparent border-none p-0">{part}</button>; 
+        if (part.match(/^#[\p{L}\p{N}_-]+/u)) return <button key={i} title="Click to filter, Shift+Click to remove" onClick={(e) => { e.stopPropagation(); if(e.shiftKey && onTagRemove) onTagRemove(part); else onTagClick(part); }} className="text-fuchsia-600 dark:text-fuchsia-400 font-bold mx-0.5 hover:underline cursor-pointer bg-transparent border-none p-0">{part}</button>; 
         return <span key={i}>{part}</span>; 
     })}</>;
 };
@@ -99,7 +99,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 {statusFilter && <span className="text-[10px] font-mono opacity-50 flex-shrink-0 bg-black/5 dark:bg-white/10 px-1 rounded">P{todo.pageIndex+1}</span>} 
                 {isProject && !todo.isCompleted && !todo.isCancelled && <FolderKanban size={14} className="text-fuchsia-500 flex-shrink-0" />}
                 <span className="truncate">
-                    <LinkifiedText text={todo.text} onTagClick={onTagClick} onTagRemove={(tag) => { const newText = todo.text.replace(tag, '').replace(/\s+/, ' ').trim(); onOpenModal({...todo, text: newText}); }} />
+                    <LinkifiedText text={todo.text} onTagClick={onTagClick} onTagRemove={(tag) => { const newText = todo.text.replace(tag, '').replace(/\s+/g, ' ').trim(); onOpenModal({...todo, text: newText}); }} />
                 </span>
                 {todo.notes && <StickyNote size={12} className="text-ink-dim flex-shrink-0 ml-1 opacity-70" fill="currentColor" />}
             </span>

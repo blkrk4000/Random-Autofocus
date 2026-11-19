@@ -1,6 +1,7 @@
 
 import { useMemo } from 'react';
 import { Todo } from '../types';
+import { extractTags } from '../utils/tags';
 
 interface UseTodoFilteringProps {
     todos: Todo[];
@@ -59,13 +60,10 @@ export const useTodoFiltering = ({
     const tagCounts = useMemo(() => { 
         const c: Record<string, number> = {}; 
         todos.forEach(t => { 
-            const matches = t.text.match(/[@#][\w-]+/g); 
-            if (matches) { 
-                matches.forEach(tag => { 
-                    if (!c[tag]) c[tag] = 0; 
-                    if (!t.isCompleted && !t.isDismissed && !t.isCancelled) c[tag]++; 
-                }); 
-            } 
+            extractTags(t.text).forEach(tag => { 
+                if (!c[tag]) c[tag] = 0; 
+                if (!t.isCompleted && !t.isDismissed && !t.isCancelled) c[tag]++; 
+            }); 
         }); 
         return c; 
     }, [todos]);
@@ -73,7 +71,7 @@ export const useTodoFiltering = ({
     // Extract all unique context/project strings for autocomplete
     const allContexts = useMemo(() => { 
         const s = new Set<string>(); 
-        todos.forEach(t => t.text.match(/[@#][\w-]+/g)?.forEach(m => s.add(m))); 
+        todos.forEach(t => extractTags(t.text).forEach(m => s.add(m))); 
         return Array.from(s).sort(); 
     }, [todos]);
 

@@ -1,12 +1,25 @@
 
 // A simple synthesizer to mimic system sounds without needing external files
+
+// Ein einziger AudioContext für die ganze App (Browser begrenzen die Anzahl, iOS braucht resume()).
+let sharedContext: AudioContext | null = null;
+
+const getAudioContext = (): AudioContext | null => {
+    const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctor) return null;
+    if (!sharedContext) sharedContext = new Ctor();
+    if (sharedContext.state === 'suspended') sharedContext.resume().catch(() => {});
+    return sharedContext;
+};
+
+// Bei einer Nutzeraktion (z. B. Timer starten) aufrufen, damit iOS/Safari später Ton erlaubt.
+export const primeAudio = () => { getAudioContext(); };
+
 export const playNotificationSound = (type: 'none' | 'sonar' | 'chime' | 'digital') => {
     if (type === 'none') return;
 
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-
-    const ctx = new AudioContext();
+    const ctx = getAudioContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
 
     const createOscillator = (freq: number, type: OscillatorType, startTime: number, duration: number, gainVal: number) => {
