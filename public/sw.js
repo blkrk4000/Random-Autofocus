@@ -1,10 +1,11 @@
 
 const CACHE_NAME = 'autofocus-v1';
+// Relative Pfade: werden relativ zur Position von sw.js aufgelöst (funktioniert auch in Unterordnern, z. B. GitHub Pages)
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg'
+  './',
+  './index.html',
+  './manifest.json',
+  './favicon.svg'
 ];
 
 // Install Event: Cache Core Assets
