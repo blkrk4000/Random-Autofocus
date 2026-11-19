@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { background-color: var(--color-app-bg); color: var(--color-text); transition: background-color 0.3s ease, color 0.3s ease; }
+.notebook-lines { background-image: linear-gradient(transparent 27px, var(--color-paper-line) 28px); background-size: 100% 28px; line-height: 28px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-paper-line); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-dim); }

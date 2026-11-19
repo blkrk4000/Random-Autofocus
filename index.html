@@ -12,55 +12,6 @@
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="mask-icon" href="/favicon.svg" color="#4f46e5" />
     <link rel="manifest" href="/manifest.json" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: { 
-              sans: ['Outfit', 'sans-serif'], 
-              mono: ['JetBrains Mono', 'monospace'],
-              serif: ['Lora', 'serif']
-            },
-            colors: {
-              paper: 'var(--color-paper)', 
-              'paper-line': 'var(--color-paper-line)', 
-              'paper-margin': 'var(--color-paper-margin)',
-              'app-bg': 'var(--color-app-bg)', 
-              'input-bg': 'var(--color-input-bg)',
-              'sidebar-bg': 'var(--color-sidebar-bg)', 
-              'sidebar-fg': 'var(--color-sidebar-fg)', 
-              'sidebar-active': 'var(--color-sidebar-active)',
-              'ink': 'var(--color-text)', 
-              'ink-dim': 'var(--color-text-dim)',
-              primary: { DEFAULT: 'var(--color-primary)', fg: 'var(--color-primary-fg)', 50: 'var(--color-primary-50)', 100: 'var(--color-primary-100)', 600: 'var(--color-primary)', 700: 'var(--color-primary-dark)' }
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      html, body { background-color: var(--color-app-bg); color: var(--color-text); transition: background-color 0.3s ease, color 0.3s ease; }
-      .notebook-lines { background-image: linear-gradient(transparent 27px, var(--color-paper-line) 28px); background-size: 100% 28px; line-height: 28px; }
-      ::-webkit-scrollbar { width: 8px; height: 8px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: var(--color-paper-line); border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: var(--color-text-dim); }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.574.0",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
-  }
-}
-</script>
 </head>
 <body>
     <div id="root"></div>
