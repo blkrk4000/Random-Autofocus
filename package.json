@@ -6,12 +6,7 @@
   "scripts": {
     "dev": "vite --port 3000",
     "build": "tsc && vite build",
-    "preview": "vite preview --port 3000",
-    "serve": "serve -s dist -l 3003",
-    "prod": "npm run build && npm run serve",
-    "prod-pm2": "pm2 serve dist 3003 --spa --name \"random-autofocus\"",
-    "dev-pm2": "pm2 start npm --name \"random-autofocus-dev\" --watch --ignore-watch=\"dist node_modules\" -- run prod",
-    "stop-pm2": "pm2 delete random-autofocus"
+    "preview": "vite preview --port 3000"
   },
   "dependencies": {
     "lucide-react": "^0.292.0",
@@ -27,12 +22,9 @@
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.20",
-    "pm2": "^6.0.14",
     "postcss": "^8.4.49",
-    "serve": "^14.2.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5",
-    "vite-plugin-pwa": "^0.19.0"
+    "vite": "^4.4.5"
   }
 }

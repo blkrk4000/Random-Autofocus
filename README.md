@@ -1,20 +1,33 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Random Autofocus
 
-# Run and deploy your AI Studio app
+Digitale Umsetzung von Mark Forsters Autofocus-System als Web-App (PWA).
 
-This contains everything you need to run your app locally.
+**App:** https://blkrk4000.github.io/Random-Autofocus/
 
-View your app in AI Studio: https://ai.studio/apps/92e685a2-784e-4bd4-b6f1-804b5401e36a
+## Funktionen
 
-## Run Locally
+- Aufgaben auf Notizbuch-Seiten, Seitengröße einstellbar (kompakt, normal, großzügig)
+- Zufallsauswahl: würfelt die nächste Aufgabe, auch nur innerhalb des Fokus-Modus
+- Aufgaben erledigen, verschieben (dismiss), abbrechen und neu eintragen
+- Tags mit `@` und `#`, Suche, Mehrfachauswahl, `@routine` für wiederkehrende Checklisten
+- Fokus-Liste, Pomodoro-Timer mit Pause und Ton
+- Themes, Dark Mode, Schriftwahl, Tastaturkürzel, Undo (50 Schritte)
+- Export und Import (JSON, Markdown), Archivieren erledigter Aufgaben
+- Offline nutzbar und installierbar
 
-**Prerequisites:**  Node.js
+Alle Daten liegen nur lokal im Browser (`localStorage`), es gibt keinen Server und keinen Sync. Deshalb regelmäßig exportieren.
 
+## Technik
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+React 18, TypeScript, Vite, Tailwind CSS 3, lucide-react. Schriften lokal über Fontsource.
+
+## Entwicklung
+
+```
+npm install
+npm run dev
+```
+
+## Veröffentlichung
+
+Jeder Push auf `main` baut die App per GitHub Actions und veröffentlicht sie auf GitHub Pages (`.github/workflows/deploy.yml`).
